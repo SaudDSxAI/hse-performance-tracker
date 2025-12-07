@@ -18,12 +18,15 @@ app = FastAPI(
 # CORS Configuration - Allow frontend to connect
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins temporarily
+    allow_origins=[
+        "http://localhost:3000",
+        "https://hse-performance-tracker.up.railway.app",
+        "*"  # Allow all origins (simplest for Railway deployment)
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # Include routers from other files
 app.include_router(AddingProjects.router)
 app.include_router(AddingCandidates.router)
