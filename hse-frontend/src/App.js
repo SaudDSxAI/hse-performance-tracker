@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Plus, Edit2, Trash2, X, MapPin, Users, Building2, AlertTriangle, Calendar, ClipboardCheck, Shield, Flame, Anchor, HardHat, ChevronRight, User, CheckCircle, XCircle, Home, Activity } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, MapPin, Users, Building2, AlertTriangle, Calendar, Shield, Flame, Anchor, HardHat, ChevronRight, User, CheckCircle, XCircle, Home, Activity } from 'lucide-react';
 import * as api from './api';
 
 const riskOptions = [
@@ -12,7 +12,6 @@ const riskOptions = [
 
 const emptyDailyLog = { timeIn: '', timeOut: '', taskBriefing: false, tbtConducted: false, violationBriefing: false, checklistSubmitted: false, observationsCount: 0 };
 const emptyMonthlyKPIs = { observationsOpen: 0, observationsClosed: 0, violations: 0, ncrsOpen: 0, ncrsClosed: 0, weeklyReportsOpen: 0, weeklyReportsClosed: 0 };
-const emptyMonthlyActivities = { mockDrill: false, campaignType: '', campaignCompleted: false, inspectionPowerTools: false, inspectionPlantEquipment: false, inspectionToolsAccessories: false, nearMissRecorded: false };
 
 export default function App() {
   const [projects, setProjects] = useState([]);
