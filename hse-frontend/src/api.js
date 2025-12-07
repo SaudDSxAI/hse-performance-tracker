@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'https://hse-performance-tracker-backend.up.railway.app/api';
+const API_BASE = 'https://hse-performance-tracker-backend.up.railway.app/api';
 
 // Transform backend data (snake_case) to frontend (camelCase)
 const transformProject = (project) => ({
