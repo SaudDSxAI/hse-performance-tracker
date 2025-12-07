@@ -18,12 +18,7 @@ app = FastAPI(
 # CORS Configuration - Allow frontend to connect
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://*.railway.app",  # Allow all Railway domains
-        "*"  # Temporary - we'll restrict this later
-    ],
+    allow_origins=["*"],  # Allow all origins temporarily
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
