@@ -1,5 +1,64 @@
 import axios from 'axios';
 
+
+// EXTENSIVE LOGGING
+console.log('═══════════════════════════════════════');
+console.log('🔧 API Configuration Loaded');
+console.log('═══════════════════════════════════════');
+console.log('API_BASE:', API_BASE);
+console.log('Environment:', process.env.NODE_ENV);
+console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+console.log('Window location:', window.location.href);
+console.log('═══════════════════════════════════════');
+
+// Add request interceptor for logging
+axios.interceptors.request.use(
+  (config) => {
+    console.log('🚀 Making request:', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      baseURL: config.baseURL,
+      fullURL: config.url,
+      headers: config.headers
+    });
+    return config;
+  },
+  (error) => {
+    console.error('❌ Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for logging
+axios.interceptors.response.use(
+  (response) => {
+    console.log('✅ Response received:', {
+      status: response.status,
+      url: response.config.url,
+      data: response.data
+    });
+    return response;
+  },
+  (error) => {
+    console.error('❌ Response error:', {
+      message: error.message,
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+    return Promise.reject(error);
+  }
+);
+
+// Rest of your api.js code stays the same...
+
+
+
+
+
+
+
+
 const API_BASE = 'https://hse-performance-tracker-backend.up.railway.app/api';
 
 // Transform backend data (snake_case) to frontend (camelCase)

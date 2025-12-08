@@ -60,37 +60,49 @@ export default function App() {
   const goToCandidate = (candidate) => { setSelectedCandidate(candidate); setView('candidate'); };
 
   // Project CRUD
-  const saveProject = async () => {
-    try {
-      setLoading(true);
-      const projectData = {
-        name: form.name,
-        location: form.location,
-        company: form.company,
-        hseLeadName: form.hseLeadName,
-        hseLeadPhoto: form.hseLeadPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(form.hseLeadName)}&size=150&background=3B82F6&color=fff`,
-        manpower: form.manpower,
-        manHours: form.manHours,
-        newInductions: form.newInductions,
-        highRisk: form.highRisk || []
-      };
+const saveProject = async () => {
+  try {
+    console.log('📝 saveProject called with form:', form);
+    setLoading(true);
+    
+    const projectData = {
+      name: form.name,
+      location: form.location,
+      company: form.company,
+      hseLeadName: form.hseLeadName,
+      hseLeadPhoto: form.hseLeadPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(form.hseLeadName)}&size=150&background=3B82F6&color=fff`,
+      manpower: form.manpower,
+      manHours: form.manHours,
+      newInductions: form.newInductions,
+      highRisk: form.highRisk || []
+    };
 
-      if (form.id) {
-        await api.updateProject(form.id, projectData);
-      } else {
-        await api.createProject(projectData);
-      }
-      
-      await fetchProjects();
-      setModal(null);
-      alert('Project saved successfully!');
-    } catch (error) {
-      console.error('Error saving project:', error);
-      alert('Failed to save project');
-    } finally {
-      setLoading(false);
+    console.log('📦 Prepared projectData:', projectData);
+
+    if (form.id) {
+      console.log('🔄 Updating existing project:', form.id);
+      await api.updateProject(form.id, projectData);
+    } else {
+      console.log('➕ Creating new project');
+      await api.createProject(projectData);
     }
-  };
+    
+    console.log('✅ Project saved successfully!');
+    await fetchProjects();
+    setModal(null);
+    alert('Project saved successfully!');
+  } catch (error) {
+    console.error('❌ Error saving project:', error);
+    console.error('Error details:', {
+      message: error.message,
+      response: error.response,
+      request: error.request
+    });
+    alert('Failed to save project: ' + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const deleteProjectHandler = async (id) => {
     if (!window.confirm('Are you sure you want to delete this project?')) return;
