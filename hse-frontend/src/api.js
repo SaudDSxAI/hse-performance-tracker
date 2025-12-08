@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = 'https://hse-performance-tracker-backend.up.railway.app';
+const API_BASE = 'https://hse-performance-tracker-backend.up.railway.app/api';
 // EXTENSIVE LOGGING
 console.log('═══════════════════════════════════════');
 console.log('🔧 API Configuration Loaded');
