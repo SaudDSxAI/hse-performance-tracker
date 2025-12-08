@@ -8,41 +8,31 @@ import AddingCandidatesMonitoring
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-# Initialize FastAPI app
 app = FastAPI(
     title="HSE Performance Tracker API",
-    description="Backend API for HSE Performance Tracking System",
     version="1.0.0"
 )
 
-# CORS Configuration - Allow frontend to connect
+# CORS - Allow frontend only
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
         "https://hse-performance-tracker.up.railway.app",
-        "*"  # Allow all origins (simplest for Railway deployment)
+        "http://localhost:3000"  # For local testing
     ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
-# Include routers from other files
+
 app.include_router(AddingProjects.router)
 app.include_router(AddingCandidates.router)
 app.include_router(AddingCandidatesMonitoring.router)
 
-# Root endpoint
 @app.get("/")
 def root():
     return {
-        "message": "HSE Performance Tracker API is running!",
+        "message": "HSE Performance Tracker API",
         "version": "1.0.0",
-        "docs": "/docs",
         "status": "active"
     }
-
-# Health check endpoint
-@app.get("/health")
-def health_check():
-    return {"status": "healthy"}
