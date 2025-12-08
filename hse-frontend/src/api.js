@@ -1,57 +1,32 @@
 import axios from 'axios';
 
+// Hardcoded backend URL - NO environment variables
 const API_BASE = 'https://hse-performance-tracker-backend.up.railway.app/api';
-// EXTENSIVE LOGGING
-console.log('═══════════════════════════════════════');
-console.log('🔧 API Configuration Loaded');
-console.log('═══════════════════════════════════════');
-console.log('API_BASE:', API_BASE);
-console.log('Environment:', process.env.NODE_ENV);
-console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
-console.log('Window location:', window.location.href);
-console.log('═══════════════════════════════════════');
 
-// Add request interceptor for logging
-axios.interceptors.request.use(
-  (config) => {
-    console.log('🚀 Making request:', {
-      method: config.method?.toUpperCase(),
-      url: config.url,
-      baseURL: config.baseURL,
-      fullURL: config.url,
-      headers: config.headers
-    });
-    return config;
-  },
-  (error) => {
-    console.error('❌ Request error:', error);
-    return Promise.reject(error);
-  }
-);
+console.log('🔧 API_BASE:', API_BASE);
 
-// Add response interceptor for logging
+// Configure axios defaults
+axios.defaults.timeout = 30000; // 30 seconds
+
+// Request logging
+axios.interceptors.request.use(config => {
+  console.log('🚀 Request:', config.method?.toUpperCase(), config.url);
+  return config;
+});
+
+// Response logging
 axios.interceptors.response.use(
-  (response) => {
-    console.log('✅ Response received:', {
-      status: response.status,
-      url: response.config.url,
-      data: response.data
-    });
+  response => {
+    console.log('✅ Success:', response.status, response.config.url);
     return response;
   },
-  (error) => {
-    console.error('❌ Response error:', {
-      message: error.message,
-      url: error.config?.url,
-      status: error.response?.status,
-      data: error.response?.data
-    });
+  error => {
+    console.error('❌ Error:', error.message, error.config?.url);
     return Promise.reject(error);
   }
 );
 
-// Rest of your api.js code stays the same...
-
+// ... rest of your api.js stays the same (all the transform functions, etc.)
 
 
 
