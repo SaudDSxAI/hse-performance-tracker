@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-
+const API_BASE = 'https://hse-performance-tracker-backend.up.railway.app/api';
 // EXTENSIVE LOGGING
 console.log('═══════════════════════════════════════');
 console.log('🔧 API Configuration Loaded');
@@ -57,9 +57,6 @@ axios.interceptors.response.use(
 
 
 
-
-
-const API_BASE = 'https://hse-performance-tracker-backend.up.railway.app/api';
 
 // Transform backend data (snake_case) to frontend (camelCase)
 const transformProject = (project) => ({
