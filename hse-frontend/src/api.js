@@ -1,37 +1,36 @@
-import axios from 'axios';
-
-// Hardcoded backend URL - NO environment variables
 const API_BASE = 'https://hse-performance-tracker-backend.up.railway.app/api';
 
 console.log('🔧 API_BASE:', API_BASE);
 
-// Configure axios defaults
-axios.defaults.timeout = 30000; // 30 seconds
+// Helper function for fetch with error handling and logging
+const fetchAPI = async (url, options = {}) => {
+  const fullURL = url.startsWith('http') ? url : `${API_BASE}${url}`;
+  
+  console.log('🚀 Request:', options.method || 'GET', fullURL);
+  
+  try {
+    const response = await fetch(fullURL, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
 
-// Request logging
-axios.interceptors.request.use(config => {
-  console.log('🚀 Request:', config.method?.toUpperCase(), config.url);
-  return config;
-});
+    console.log('✅ Response:', response.status, fullURL);
 
-// Response logging
-axios.interceptors.response.use(
-  response => {
-    console.log('✅ Success:', response.status, response.config.url);
-    return response;
-  },
-  error => {
-    console.error('❌ Error:', error.message, error.config?.url);
-    return Promise.reject(error);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error response:', errorText);
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('❌ Fetch error:', error.message, fullURL);
+    throw error;
   }
-);
-
-// ... rest of your api.js stays the same (all the transform functions, etc.)
-
-
-
-
-
+};
 
 // Transform backend data (snake_case) to frontend (camelCase)
 const transformProject = (project) => ({
@@ -124,33 +123,43 @@ const transformCandidateToBackend = (candidate, projectId) => ({
   role: candidate.role || ''
 });
 
-// Projects
+// ==================== PROJECTS ====================
+
 export const getProjects = async () => {
-  const response = await axios.get(`${API_BASE}/projects`);
-  return response.data.map(transformProject);
+  const data = await fetchAPI('/projects');
+  return data.map(transformProject);
 };
 
 export const createProject = async (project) => {
-  const response = await axios.post(`${API_BASE}/projects`, transformProjectToBackend(project));
-  return transformProject(response.data);
+  const data = await fetchAPI('/projects', {
+    method: 'POST',
+    body: JSON.stringify(transformProjectToBackend(project)),
+  });
+  return transformProject(data);
 };
 
 export const updateProject = async (id, project) => {
-  const response = await axios.put(`${API_BASE}/projects/${id}`, transformProjectToBackend(project));
-  return transformProject(response.data);
+  const data = await fetchAPI(`/projects/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(transformProjectToBackend(project)),
+  });
+  return transformProject(data);
 };
 
 export const deleteProject = async (id) => {
-  await axios.delete(`${API_BASE}/projects/${id}`);
+  await fetchAPI(`/projects/${id}`, {
+    method: 'DELETE',
+  });
 };
 
-// Candidates
+// ==================== CANDIDATES ====================
+
 export const getCandidatesByProject = async (projectId) => {
-  const response = await axios.get(`${API_BASE}/candidates/project/${projectId}`);
+  const data = await fetchAPI(`/candidates/project/${projectId}`);
   
   // Fetch daily logs and KPIs for each candidate
   const candidatesWithData = await Promise.all(
-    response.data.map(async (candidate) => {
+    data.map(async (candidate) => {
       try {
         const [dailyLogs, monthlyKPIs] = await Promise.all([
           getDailyLogsByCandidate(candidate.id),
@@ -168,66 +177,82 @@ export const getCandidatesByProject = async (projectId) => {
 };
 
 export const getCandidate = async (candidateId) => {
-  const response = await axios.get(`${API_BASE}/candidates/${candidateId}`);
+  const data = await fetchAPI(`/candidates/${candidateId}`);
   const [dailyLogs, monthlyKPIs] = await Promise.all([
     getDailyLogsByCandidate(candidateId),
     getMonthlyKPIsByCandidate(candidateId)
   ]);
-  return transformCandidate(response.data, dailyLogs, monthlyKPIs);
+  return transformCandidate(data, dailyLogs, monthlyKPIs);
 };
 
 export const createCandidate = async (candidate, projectId) => {
-  const response = await axios.post(`${API_BASE}/candidates`, transformCandidateToBackend(candidate, projectId));
-  return transformCandidate(response.data, [], []);
+  const data = await fetchAPI('/candidates', {
+    method: 'POST',
+    body: JSON.stringify(transformCandidateToBackend(candidate, projectId)),
+  });
+  return transformCandidate(data, [], []);
 };
 
 export const updateCandidate = async (id, candidate, projectId) => {
-  const response = await axios.put(`${API_BASE}/candidates/${id}`, transformCandidateToBackend(candidate, projectId));
-  return transformCandidate(response.data, [], []);
+  const data = await fetchAPI(`/candidates/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(transformCandidateToBackend(candidate, projectId)),
+  });
+  return transformCandidate(data, [], []);
 };
 
 export const deleteCandidate = async (id) => {
-  await axios.delete(`${API_BASE}/candidates/${id}`);
+  await fetchAPI(`/candidates/${id}`, {
+    method: 'DELETE',
+  });
 };
 
-// Daily Logs
+// ==================== DAILY LOGS ====================
+
 export const createDailyLog = async (candidateId, date, log) => {
-  const response = await axios.post(`${API_BASE}/daily-logs`, {
-    candidate_id: candidateId,
-    log_date: date,
-    time_in: log.timeIn || null,
-    time_out: log.timeOut || null,
-    task_briefing: log.taskBriefing || false,
-    tbt_conducted: log.tbtConducted || false,
-    violation_briefing: log.violationBriefing || false,
-    checklist_submitted: log.checklistSubmitted || false,
-    observations_count: log.observationsCount || 0
+  const data = await fetchAPI('/daily-logs', {
+    method: 'POST',
+    body: JSON.stringify({
+      candidate_id: candidateId,
+      log_date: date,
+      time_in: log.timeIn || null,
+      time_out: log.timeOut || null,
+      task_briefing: log.taskBriefing || false,
+      tbt_conducted: log.tbtConducted || false,
+      violation_briefing: log.violationBriefing || false,
+      checklist_submitted: log.checklistSubmitted || false,
+      observations_count: log.observationsCount || 0
+    }),
   });
-  return response.data;
+  return data;
 };
 
 export const getDailyLogsByCandidate = async (candidateId) => {
-  const response = await axios.get(`${API_BASE}/candidates/${candidateId}/daily-logs`);
-  return response.data;
+  const data = await fetchAPI(`/candidates/${candidateId}/daily-logs`);
+  return data;
 };
 
-// Monthly KPIs
+// ==================== MONTHLY KPIs ====================
+
 export const createMonthlyKPI = async (candidateId, month, kpis) => {
-  const response = await axios.post(`${API_BASE}/monthly-kpis`, {
-    candidate_id: candidateId,
-    month: month,
-    observations_open: kpis.observationsOpen || 0,
-    observations_closed: kpis.observationsClosed || 0,
-    violations: kpis.violations || 0,
-    ncrs_open: kpis.ncrsOpen || 0,
-    ncrs_closed: kpis.ncrsClosed || 0,
-    weekly_reports_open: kpis.weeklyReportsOpen || 0,
-    weekly_reports_closed: kpis.weeklyReportsClosed || 0
+  const data = await fetchAPI('/monthly-kpis', {
+    method: 'POST',
+    body: JSON.stringify({
+      candidate_id: candidateId,
+      month: month,
+      observations_open: kpis.observationsOpen || 0,
+      observations_closed: kpis.observationsClosed || 0,
+      violations: kpis.violations || 0,
+      ncrs_open: kpis.ncrsOpen || 0,
+      ncrs_closed: kpis.ncrsClosed || 0,
+      weekly_reports_open: kpis.weeklyReportsOpen || 0,
+      weekly_reports_closed: kpis.weeklyReportsClosed || 0
+    }),
   });
-  return response.data;
+  return data;
 };
 
 export const getMonthlyKPIsByCandidate = async (candidateId) => {
-  const response = await axios.get(`${API_BASE}/candidates/${candidateId}/monthly-kpis`);
-  return response.data;
+  const data = await fetchAPI(`/candidates/${candidateId}/monthly-kpis`);
+  return data;
 };
