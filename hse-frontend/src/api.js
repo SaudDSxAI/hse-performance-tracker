@@ -1,4 +1,4 @@
-const API_BASE = 'https://hse-performance-tracker-backend.up.railway.app/api';
+const API_BASE = 'https://hse-backend.up.railway.app/api';
 
 console.log('🔧 API_BASE:', API_BASE);
 

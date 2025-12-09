@@ -17,11 +17,11 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://hse-performance-tracker.up.railway.app",
-        "http://localhost:3000"  # For local testing
+        "https://hse-tracker.up.railway.app",  # New frontend URL
+        "http://localhost:3000"
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
