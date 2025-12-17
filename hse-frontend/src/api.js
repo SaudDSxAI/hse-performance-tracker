@@ -81,8 +81,7 @@ const transformCandidate = (candidate, dailyLogs = [], monthlyKPIs = []) => {
       taskBriefing: log.task_briefing,
       tbtConducted: log.tbt_conducted,
       violationBriefing: log.violation_briefing,
-      checklistSubmitted: log.checklist_submitted,
-      observationsCount: log.observations_count
+      checklistSubmitted: log.checklist_submitted
     };
   });
 
@@ -217,11 +216,10 @@ export const createDailyLog = async (candidateId, date, log) => {
       log_date: date,
       time_in: log.timeIn || null,
       time_out: log.timeOut || null,
-      task_briefing: log.taskBriefing || false,
-      tbt_conducted: log.tbtConducted || false,
-      violation_briefing: log.violationBriefing || false,
-      checklist_submitted: log.checklistSubmitted || false,
-      observations_count: log.observationsCount || 0
+      task_briefing: log.taskBriefing,
+      tbt_conducted: log.tbtConducted,
+      violation_briefing: log.violationBriefing,
+      checklist_submitted: log.checklistSubmitted
     }),
   });
   return data;

@@ -10,7 +10,7 @@ const riskOptions = [
   { key: 'hotwork', label: 'Hot Work', icon: Flame, color: 'bg-orange-100 text-orange-700' }
 ];
 
-const emptyDailyLog = { timeIn: '', timeOut: '', taskBriefing: false, tbtConducted: false, violationBriefing: false, checklistSubmitted: false, observationsCount: 0 };
+const emptyDailyLog = { timeIn: '', timeOut: '', taskBriefing: null, tbtConducted: null, violationBriefing: null, checklistSubmitted: null };
 const emptyMonthlyKPIs = { observationsOpen: 0, observationsClosed: 0, violations: 0, ncrsOpen: 0, ncrsClosed: 0, weeklyReportsOpen: 0, weeklyReportsClosed: 0 };
 
 export default function App() {
@@ -237,33 +237,42 @@ const saveProject = async () => {
     const fromDate = new Date(chartDateRange.from);
     const toDate = new Date(chartDateRange.to);
     
-    let totalDays = 0;
-    let taskBriefingCount = 0;
-    let tbtCount = 0;
-    let violationBriefingCount = 0;
-    let checklistCount = 0;
-    let totalObservations = 0;
+    // Track Yes count and total answered (excluding nulls) for each task
+    let taskBriefing = { yes: 0, answered: 0 };
+    let tbt = { yes: 0, answered: 0 };
+    let violationBriefing = { yes: 0, answered: 0 };
+    let checklist = { yes: 0, answered: 0 };
     
     Object.entries(logs).forEach(([date, log]) => {
       const logDate = new Date(date);
       if (logDate >= fromDate && logDate <= toDate) {
-        totalDays++;
-        if (log.taskBriefing) taskBriefingCount++;
-        if (log.tbtConducted) tbtCount++;
-        if (log.violationBriefing) violationBriefingCount++;
-        if (log.checklistSubmitted) checklistCount++;
-        totalObservations += log.observationsCount || 0;
+        // Only count if not null (answered)
+        if (log.taskBriefing !== null) {
+          taskBriefing.answered++;
+          if (log.taskBriefing === true) taskBriefing.yes++;
+        }
+        if (log.tbtConducted !== null) {
+          tbt.answered++;
+          if (log.tbtConducted === true) tbt.yes++;
+        }
+        if (log.violationBriefing !== null) {
+          violationBriefing.answered++;
+          if (log.violationBriefing === true) violationBriefing.yes++;
+        }
+        if (log.checklistSubmitted !== null) {
+          checklist.answered++;
+          if (log.checklistSubmitted === true) checklist.yes++;
+        }
       }
     });
     
-    if (totalDays === 0) return [];
+    const calcPercentage = (data) => data.answered > 0 ? Math.round((data.yes / data.answered) * 100) : 0;
     
     return [
-      { name: 'Task Briefing', value: Math.round((taskBriefingCount / totalDays) * 100), count: taskBriefingCount },
-      { name: 'TBT Conducted', value: Math.round((tbtCount / totalDays) * 100), count: tbtCount },
-      { name: 'Violation Brief', value: Math.round((violationBriefingCount / totalDays) * 100), count: violationBriefingCount },
-      { name: 'Checklist', value: Math.round((checklistCount / totalDays) * 100), count: checklistCount },
-      { name: 'Observations', value: totalObservations, count: totalObservations }
+      { name: 'Task Briefing', value: calcPercentage(taskBriefing), yes: taskBriefing.yes, total: taskBriefing.answered },
+      { name: 'TBT Conducted', value: calcPercentage(tbt), yes: tbt.yes, total: tbt.answered },
+      { name: 'Violation Brief', value: calcPercentage(violationBriefing), yes: violationBriefing.yes, total: violationBriefing.answered },
+      { name: 'Checklist', value: calcPercentage(checklist), yes: checklist.yes, total: checklist.answered }
     ];
   };
 
@@ -274,31 +283,35 @@ const saveProject = async () => {
     const logs = candidate.dailyLogs;
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
     
-    let totalDays = 0;
-    let taskBriefingCount = 0;
-    let tbtCount = 0;
-    let violationBriefingCount = 0;
-    let checklistCount = 0;
+    let totalYes = 0;
+    let totalAnswered = 0;
     
     Object.entries(logs).forEach(([date, log]) => {
       const logDate = new Date(date);
       if (logDate >= sevenDaysAgo) {
-        totalDays++;
-        if (log.taskBriefing) taskBriefingCount++;
-        if (log.tbtConducted) tbtCount++;
-        if (log.violationBriefing) violationBriefingCount++;
-        if (log.checklistSubmitted) checklistCount++;
+        // Only count answered tasks (not null)
+        if (log.taskBriefing !== null) {
+          totalAnswered++;
+          if (log.taskBriefing === true) totalYes++;
+        }
+        if (log.tbtConducted !== null) {
+          totalAnswered++;
+          if (log.tbtConducted === true) totalYes++;
+        }
+        if (log.violationBriefing !== null) {
+          totalAnswered++;
+          if (log.violationBriefing === true) totalYes++;
+        }
+        if (log.checklistSubmitted !== null) {
+          totalAnswered++;
+          if (log.checklistSubmitted === true) totalYes++;
+        }
       }
     });
     
-    if (totalDays === 0) return 0;
+    if (totalAnswered === 0) return 0;
     
-    const taskPerf = (taskBriefingCount / totalDays) * 100;
-    const tbtPerf = (tbtCount / totalDays) * 100;
-    const violationPerf = (violationBriefingCount / totalDays) * 100;
-    const checklistPerf = (checklistCount / totalDays) * 100;
-    
-    return Math.round((taskPerf + tbtPerf + violationPerf + checklistPerf) / 4);
+    return Math.round((totalYes / totalAnswered) * 100);
   };
 
   // Speedometer Component
@@ -371,6 +384,42 @@ const saveProject = async () => {
     const logs = data.dailyLogs || {};
     const todayLog = logs[selectedDate] || null;
 
+    const TaskStatus = ({ value, label }) => {
+      if (value === null || value === undefined) {
+        return (
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <p className="text-xs text-gray-500 mb-1">{label}</p>
+            <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500">
+              Empty
+            </span>
+          </div>
+        );
+      }
+      return (
+        <div className="p-3 bg-gray-50 rounded-lg">
+          <p className="text-xs text-gray-500 mb-1">{label}</p>
+          <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
+            value ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+          }`}>
+            {value ? <CheckCircle size={12} /> : <XCircle size={12} />}
+            {value ? 'Yes (1)' : 'No (0)'}
+          </span>
+        </div>
+      );
+    };
+
+    // Calculate score for this log
+    const getLogScore = (log) => {
+      if (!log) return null;
+      const tasks = [log.taskBriefing, log.tbtConducted, log.violationBriefing, log.checklistSubmitted];
+      const answered = tasks.filter(t => t !== null && t !== undefined);
+      if (answered.length === 0) return null;
+      const yesCount = answered.filter(t => t === true).length;
+      return { yes: yesCount, total: answered.length, percentage: Math.round((yesCount / answered.length) * 100) };
+    };
+
+    const score = getLogScore(todayLog);
+
     return (
       <div className="bg-white rounded-xl shadow-sm border">
         <div className="p-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -384,35 +433,27 @@ const saveProject = async () => {
         </div>
         <div className="p-4">
           {todayLog ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500">Time IN</p>
-                <p className="font-semibold">{todayLog.timeIn || '-'}</p>
+            <div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500">Time IN</p>
+                  <p className="font-semibold">{todayLog.timeIn || '-'}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500">Time OUT</p>
+                  <p className="font-semibold">{todayLog.timeOut || '-'}</p>
+                </div>
+                <TaskStatus value={todayLog.taskBriefing} label="Task Briefing" />
+                <TaskStatus value={todayLog.tbtConducted} label="TBT Conducted" />
+                <TaskStatus value={todayLog.violationBriefing} label="Violation Brief" />
+                <TaskStatus value={todayLog.checklistSubmitted} label="Checklist" />
               </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500">Time OUT</p>
-                <p className="font-semibold">{todayLog.timeOut || '-'}</p>
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500">Task Briefing</p>
-                <StatusBadge done={todayLog.taskBriefing} />
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500">TBT</p>
-                <StatusBadge done={todayLog.tbtConducted} />
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500">Violation Brief</p>
-                <StatusBadge done={todayLog.violationBriefing} />
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500">Checklist</p>
-                <StatusBadge done={todayLog.checklistSubmitted} />
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500">Observations</p>
-                <p className="text-xl font-bold text-blue-700">{todayLog.observationsCount || 0}</p>
-              </div>
+              {score && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg flex items-center justify-between">
+                  <span className="text-sm font-medium text-blue-700">Daily Score</span>
+                  <span className="text-lg font-bold text-blue-700">{score.yes}/{score.total} = {score.percentage}%</span>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-gray-500 text-center py-6">No log for {selectedDate}</p>
@@ -661,22 +702,50 @@ const saveProject = async () => {
 
                 {/* Right: Performance Chart */}
                 <div className="flex-1">
-                  <div className="mb-3 flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-                    <span className="text-sm font-medium text-gray-700">Performance Period:</span>
-                    <div className="flex gap-2 items-center">
-                      <input 
-                        type="date" 
-                        value={chartDateRange.from} 
-                        onChange={(e) => setChartDateRange({ ...chartDateRange, from: e.target.value })} 
-                        className="border rounded px-2 py-1 text-sm"
-                      />
-                      <span className="text-gray-500">to</span>
-                      <input 
-                        type="date" 
-                        value={chartDateRange.to} 
-                        onChange={(e) => setChartDateRange({ ...chartDateRange, to: e.target.value })} 
-                        className="border rounded px-2 py-1 text-sm"
-                      />
+                  <div className="mb-3">
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {[
+                        { label: '7 Days', days: 7 },
+                        { label: '30 Days', days: 30 },
+                        { label: '3 Months', days: 90 },
+                        { label: '6 Months', days: 180 },
+                        { label: '1 Year', days: 365 }
+                      ].map(({ label, days }) => {
+                        const fromDate = new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
+                        const toDate = new Date().toISOString().split('T')[0];
+                        const isActive = chartDateRange.from === fromDate && chartDateRange.to === toDate;
+                        return (
+                          <button
+                            key={label}
+                            onClick={() => setChartDateRange({ from: fromDate, to: toDate })}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                              isActive 
+                                ? 'bg-blue-600 text-white' 
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                      <span className="text-sm font-medium text-gray-700">Custom:</span>
+                      <div className="flex gap-2 items-center">
+                        <input 
+                          type="date" 
+                          value={chartDateRange.from} 
+                          onChange={(e) => setChartDateRange({ ...chartDateRange, from: e.target.value })} 
+                          className="border rounded px-2 py-1 text-sm"
+                        />
+                        <span className="text-gray-500">to</span>
+                        <input 
+                          type="date" 
+                          value={chartDateRange.to} 
+                          onChange={(e) => setChartDateRange({ ...chartDateRange, to: e.target.value })} 
+                          className="border rounded px-2 py-1 text-sm"
+                        />
+                      </div>
                     </div>
                   </div>
                   {getCandidatePerformanceData(selectedCandidate).length > 0 ? (
@@ -692,7 +761,7 @@ const saveProject = async () => {
                                 <div className="bg-white p-2 border rounded shadow-sm">
                                   <p className="text-sm font-medium">{data.name}</p>
                                   <p className="text-sm text-blue-600">
-                                    {data.name === 'Observations' ? `Total: ${data.value}` : `${data.value}% (${data.count} days)`}
+                                    {data.value}% ({data.yes}/{data.total} Yes)
                                   </p>
                                 </div>
                               );
@@ -819,21 +888,55 @@ const saveProject = async () => {
                   <input type="time" value={form.timeOut || ''} onChange={e => setForm({ ...form, timeOut: e.target.value })} className="w-full border rounded-lg px-3 py-2" />
                 </div>
               </div>
+              
               {[
                 { key: 'taskBriefing', label: 'Task Briefing Submitted' },
                 { key: 'tbtConducted', label: 'TBT Conducted' },
                 { key: 'violationBriefing', label: 'Violation Briefing Conducted' },
                 { key: 'checklistSubmitted', label: 'Daily Checklist Submitted' }
               ].map(item => (
-                <label key={item.key} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                  <input type="checkbox" checked={form[item.key] || false} onChange={e => setForm({ ...form, [item.key]: e.target.checked })} className="w-5 h-5 rounded" />
-                  <span>{item.label}</span>
-                </label>
+                <div key={item.key} className="p-3 border rounded-lg">
+                  <p className="text-sm font-medium mb-2">{item.label}</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, [item.key]: true })}
+                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 ${
+                        form[item.key] === true
+                          ? 'bg-green-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-green-50 hover:text-green-600'
+                      }`}
+                    >
+                      <CheckCircle size={16} />
+                      Yes (1)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, [item.key]: false })}
+                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 ${
+                        form[item.key] === false
+                          ? 'bg-red-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600'
+                      }`}
+                    >
+                      <XCircle size={16} />
+                      No (0)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, [item.key]: null })}
+                      className={`py-2 px-3 rounded-lg text-sm font-medium transition ${
+                        form[item.key] === null || form[item.key] === undefined
+                          ? 'bg-gray-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      Empty
+                    </button>
+                  </div>
+                </div>
               ))}
-              <div>
-                <label className="block text-sm font-medium mb-1">Observations Recorded</label>
-                <input type="number" min="0" value={form.observationsCount || 0} onChange={e => setForm({ ...form, observationsCount: parseInt(e.target.value) || 0 })} className="w-full border rounded-lg px-3 py-2" />
-              </div>
+              
               <button onClick={saveDailyLog} disabled={loading} className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
                 {loading ? 'Saving...' : 'Save Log'}
               </button>
