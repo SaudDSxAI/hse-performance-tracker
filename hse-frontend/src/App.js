@@ -372,13 +372,6 @@ const saveProject = async () => {
     </div>
   );
 
-  const StatusBadge = ({ done }) => (
-    <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${done ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-      {done ? <CheckCircle size={12} /> : <XCircle size={12} />}
-      {done ? 'Done' : 'Pending'}
-    </span>
-  );
-
   // Daily Monitoring Section
   const DailyMonitoringSection = ({ data }) => {
     const logs = data.dailyLogs || {};
