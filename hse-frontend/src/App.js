@@ -48,7 +48,6 @@ export default function App() {
   const [cropPosition, setCropPosition] = useState({ x: 0, y: 0, scale: 1 }); // For adjusting photo
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
-  const canvasRef = useRef(null);
 
   // Fetch projects on load
   useEffect(() => {
