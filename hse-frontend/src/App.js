@@ -285,24 +285,54 @@ const saveProject = async () => {
         canvas.width = outputSize;
         canvas.height = outputSize;
         
-        // Calculate crop dimensions
-        const minDim = Math.min(img.width, img.height);
+        // Image dimensions
+        const imgWidth = img.width;
+        const imgHeight = img.height;
+        
+        // Calculate the visible area based on object-fit: cover
+        // This means the image fills the container, cropping excess
+        const imgAspect = imgWidth / imgHeight;
+        let srcWidth, srcHeight, srcX, srcY;
+        
+        if (imgAspect > 1) {
+          // Landscape image - height fits, width crops
+          srcHeight = imgHeight;
+          srcWidth = imgHeight;
+          srcX = (imgWidth - srcWidth) / 2;
+          srcY = 0;
+        } else {
+          // Portrait image - width fits, height crops
+          srcWidth = imgWidth;
+          srcHeight = imgWidth;
+          srcX = 0;
+          srcY = (imgHeight - srcHeight) / 2;
+        }
+        
+        // Apply zoom (scale)
         const scale = cropPosition.scale;
-        const cropSize = minDim / scale;
+        const zoomedSize = Math.min(srcWidth, srcHeight) / scale;
         
-        // Center point with offset
-        const centerX = img.width / 2 + (cropPosition.x * img.width / 200);
-        const centerY = img.height / 2 + (cropPosition.y * img.height / 200);
+        // Apply position offset (x, y are percentages from -50 to 50)
+        const offsetX = (cropPosition.x / 100) * zoomedSize;
+        const offsetY = (cropPosition.y / 100) * zoomedSize;
         
-        // Source coordinates
-        const sx = Math.max(0, Math.min(centerX - cropSize / 2, img.width - cropSize));
-        const sy = Math.max(0, Math.min(centerY - cropSize / 2, img.height - cropSize));
+        // Calculate final source rectangle
+        const finalSrcX = srcX + (srcWidth - zoomedSize) / 2 + offsetX;
+        const finalSrcY = srcY + (srcHeight - zoomedSize) / 2 + offsetY;
+        
+        // Clamp to image bounds
+        const clampedSrcX = Math.max(0, Math.min(finalSrcX, imgWidth - zoomedSize));
+        const clampedSrcY = Math.max(0, Math.min(finalSrcY, imgHeight - zoomedSize));
         
         // Draw cropped image
-        ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, outputSize, outputSize);
+        ctx.drawImage(
+          img, 
+          clampedSrcX, clampedSrcY, zoomedSize, zoomedSize,
+          0, 0, outputSize, outputSize
+        );
         
         // Convert to base64
-        const croppedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+        const croppedBase64 = canvas.toDataURL('image/jpeg', 0.85);
         
         // Update candidate with new photo
         const candidateData = {
@@ -1204,17 +1234,15 @@ const saveProject = async () => {
                 <>
                   {/* Photo Preview with Crop */}
                   <div className="flex justify-center mb-4">
-                    <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-blue-500">
+                    <div className="relative w-64 h-64 rounded-full overflow-hidden border-4 border-blue-500 bg-gray-900">
                       <img 
                         src={tempPhoto} 
                         alt="Preview" 
-                        className="absolute"
+                        className="absolute w-full h-full"
                         style={{
-                          width: `${100 * cropPosition.scale}%`,
-                          height: `${100 * cropPosition.scale}%`,
-                          left: `${50 - (cropPosition.scale * 50) + cropPosition.x}%`,
-                          top: `${50 - (cropPosition.scale * 50) + cropPosition.y}%`,
-                          objectFit: 'cover'
+                          objectFit: 'cover',
+                          objectPosition: `${50 + cropPosition.x}% ${50 + cropPosition.y}%`,
+                          transform: `scale(${cropPosition.scale})`,
                         }}
                       />
                     </div>
@@ -1223,11 +1251,14 @@ const saveProject = async () => {
                   {/* Adjustment Controls */}
                   <div className="space-y-4 mb-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Zoom</label>
+                      <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                        <span>Zoom</span>
+                        <span>{cropPosition.scale.toFixed(1)}x</span>
+                      </div>
                       <input
                         type="range"
                         min="1"
-                        max="3"
+                        max="2.5"
                         step="0.1"
                         value={cropPosition.scale}
                         onChange={(e) => setCropPosition({ ...cropPosition, scale: parseFloat(e.target.value) })}
@@ -1236,28 +1267,38 @@ const saveProject = async () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Horizontal</label>
+                        <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                          <span>← Left / Right →</span>
+                        </div>
                         <input
                           type="range"
-                          min="-30"
-                          max="30"
+                          min="-50"
+                          max="50"
                           value={cropPosition.x}
                           onChange={(e) => setCropPosition({ ...cropPosition, x: parseInt(e.target.value) })}
                           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Vertical</label>
+                        <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                          <span>↑ Up / Down ↓</span>
+                        </div>
                         <input
                           type="range"
-                          min="-30"
-                          max="30"
+                          min="-50"
+                          max="50"
                           value={cropPosition.y}
                           onChange={(e) => setCropPosition({ ...cropPosition, y: parseInt(e.target.value) })}
                           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                         />
                       </div>
                     </div>
+                    <button
+                      onClick={() => setCropPosition({ x: 0, y: 0, scale: 1 })}
+                      className="w-full text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      Reset to Center
+                    </button>
                   </div>
                   
                   {/* Action Buttons */}
