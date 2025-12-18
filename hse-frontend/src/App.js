@@ -10,7 +10,24 @@ const riskOptions = [
   { key: 'hotwork', label: 'Hot Work', icon: Flame, color: 'bg-orange-100 text-orange-700' }
 ];
 
-const emptyDailyLog = { timeIn: '', timeOut: '', taskBriefing: null, tbtConducted: null, violationBriefing: null, checklistSubmitted: null };
+const emptyDailyLog = { 
+  timeIn: '', 
+  timeOut: '', 
+  taskBriefing: null, 
+  tbtConducted: null, 
+  violationBriefing: null, 
+  checklistSubmitted: null,
+  inductionsCovered: null,
+  barcodeImplemented: null,
+  attendanceVerified: null,
+  safetyObservationsRecorded: null,
+  sorNcrClosed: null,
+  mockDrillParticipated: null,
+  campaignParticipated: null,
+  monthlyInspectionsCompleted: null,
+  nearMissReported: null,
+  weeklyTrainingBriefed: null
+};
 const emptyMonthlyKPIs = { observationsOpen: 0, observationsClosed: 0, violations: 0, ncrsOpen: 0, ncrsClosed: 0, weeklyReportsOpen: 0, weeklyReportsClosed: 0 };
 
 export default function App() {
@@ -237,43 +254,47 @@ const saveProject = async () => {
     const fromDate = new Date(chartDateRange.from);
     const toDate = new Date(chartDateRange.to);
     
-    // Track Yes count and total answered (excluding nulls) for each task
-    let taskBriefing = { yes: 0, answered: 0 };
-    let tbt = { yes: 0, answered: 0 };
-    let violationBriefing = { yes: 0, answered: 0 };
-    let checklist = { yes: 0, answered: 0 };
+    // All task fields to track
+    const taskFields = [
+      { key: 'inductionsCovered', label: 'Inductions' },
+      { key: 'barcodeImplemented', label: 'Barcode' },
+      { key: 'attendanceVerified', label: 'Attendance' },
+      { key: 'taskBriefing', label: 'Task Brief' },
+      { key: 'tbtConducted', label: 'TBT' },
+      { key: 'violationBriefing', label: 'Violations' },
+      { key: 'safetyObservationsRecorded', label: 'Observations' },
+      { key: 'sorNcrClosed', label: 'SOR/NCR' },
+      { key: 'mockDrillParticipated', label: 'Mock Drill' },
+      { key: 'campaignParticipated', label: 'Campaign' },
+      { key: 'monthlyInspectionsCompleted', label: 'Inspections' },
+      { key: 'nearMissReported', label: 'Near Miss' },
+      { key: 'weeklyTrainingBriefed', label: 'Training' }
+    ];
+    
+    // Initialize counters for each field
+    const counters = {};
+    taskFields.forEach(f => counters[f.key] = { yes: 0, answered: 0 });
     
     Object.entries(logs).forEach(([date, log]) => {
       const logDate = new Date(date);
       if (logDate >= fromDate && logDate <= toDate) {
-        // Only count if not null (answered)
-        if (log.taskBriefing !== null) {
-          taskBriefing.answered++;
-          if (log.taskBriefing === true) taskBriefing.yes++;
-        }
-        if (log.tbtConducted !== null) {
-          tbt.answered++;
-          if (log.tbtConducted === true) tbt.yes++;
-        }
-        if (log.violationBriefing !== null) {
-          violationBriefing.answered++;
-          if (log.violationBriefing === true) violationBriefing.yes++;
-        }
-        if (log.checklistSubmitted !== null) {
-          checklist.answered++;
-          if (log.checklistSubmitted === true) checklist.yes++;
-        }
+        taskFields.forEach(f => {
+          if (log[f.key] !== null && log[f.key] !== undefined) {
+            counters[f.key].answered++;
+            if (log[f.key] === true) counters[f.key].yes++;
+          }
+        });
       }
     });
     
     const calcPercentage = (data) => data.answered > 0 ? Math.round((data.yes / data.answered) * 100) : 0;
     
-    return [
-      { name: 'Task Briefing', value: calcPercentage(taskBriefing), yes: taskBriefing.yes, total: taskBriefing.answered },
-      { name: 'TBT Conducted', value: calcPercentage(tbt), yes: tbt.yes, total: tbt.answered },
-      { name: 'Violation Brief', value: calcPercentage(violationBriefing), yes: violationBriefing.yes, total: violationBriefing.answered },
-      { name: 'Checklist', value: calcPercentage(checklist), yes: checklist.yes, total: checklist.answered }
-    ];
+    return taskFields.map(f => ({
+      name: f.label,
+      value: calcPercentage(counters[f.key]),
+      yes: counters[f.key].yes,
+      total: counters[f.key].answered
+    }));
   };
 
   // Calculate overall performance percentage for speedometer
@@ -283,29 +304,26 @@ const saveProject = async () => {
     const logs = candidate.dailyLogs;
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
     
+    // All boolean task fields
+    const taskKeys = [
+      'inductionsCovered', 'barcodeImplemented', 'attendanceVerified', 'taskBriefing',
+      'tbtConducted', 'violationBriefing', 'safetyObservationsRecorded', 'sorNcrClosed',
+      'mockDrillParticipated', 'campaignParticipated', 'monthlyInspectionsCompleted',
+      'nearMissReported', 'weeklyTrainingBriefed'
+    ];
+    
     let totalYes = 0;
     let totalAnswered = 0;
     
     Object.entries(logs).forEach(([date, log]) => {
       const logDate = new Date(date);
       if (logDate >= sevenDaysAgo) {
-        // Only count answered tasks (not null)
-        if (log.taskBriefing !== null) {
-          totalAnswered++;
-          if (log.taskBriefing === true) totalYes++;
-        }
-        if (log.tbtConducted !== null) {
-          totalAnswered++;
-          if (log.tbtConducted === true) totalYes++;
-        }
-        if (log.violationBriefing !== null) {
-          totalAnswered++;
-          if (log.violationBriefing === true) totalYes++;
-        }
-        if (log.checklistSubmitted !== null) {
-          totalAnswered++;
-          if (log.checklistSubmitted === true) totalYes++;
-        }
+        taskKeys.forEach(key => {
+          if (log[key] !== null && log[key] !== undefined) {
+            totalAnswered++;
+            if (log[key] === true) totalYes++;
+          }
+        });
       }
     });
     
@@ -380,31 +398,48 @@ const saveProject = async () => {
     const TaskStatus = ({ value, label }) => {
       if (value === null || value === undefined) {
         return (
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-500 mb-1">{label}</p>
-            <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500">
+          <div className="p-2 bg-gray-50 rounded-lg">
+            <p className="text-xs text-gray-500 mb-1 truncate" title={label}>{label}</p>
+            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
               Empty
             </span>
           </div>
         );
       }
       return (
-        <div className="p-3 bg-gray-50 rounded-lg">
-          <p className="text-xs text-gray-500 mb-1">{label}</p>
-          <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
+        <div className="p-2 bg-gray-50 rounded-lg">
+          <p className="text-xs text-gray-500 mb-1 truncate" title={label}>{label}</p>
+          <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
             value ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
           }`}>
-            {value ? <CheckCircle size={12} /> : <XCircle size={12} />}
-            {value ? 'Yes (1)' : 'No (0)'}
+            {value ? <CheckCircle size={10} /> : <XCircle size={10} />}
+            {value ? 'Yes' : 'No'}
           </span>
         </div>
       );
     };
 
+    // All task fields
+    const taskFields = [
+      { key: 'inductionsCovered', label: 'Inductions Covered' },
+      { key: 'barcodeImplemented', label: 'Barcode 100%' },
+      { key: 'attendanceVerified', label: 'Attendance Verified' },
+      { key: 'taskBriefing', label: 'Task Briefing' },
+      { key: 'tbtConducted', label: 'TBT Conducted' },
+      { key: 'violationBriefing', label: 'Violation Briefing' },
+      { key: 'safetyObservationsRecorded', label: 'Safety Observations' },
+      { key: 'sorNcrClosed', label: 'SOR/NCR Closed' },
+      { key: 'mockDrillParticipated', label: 'Mock Drill' },
+      { key: 'campaignParticipated', label: 'Campaign' },
+      { key: 'monthlyInspectionsCompleted', label: 'Monthly Inspections' },
+      { key: 'nearMissReported', label: 'Near Miss Reported' },
+      { key: 'weeklyTrainingBriefed', label: 'Weekly Training' }
+    ];
+
     // Calculate score for this log
     const getLogScore = (log) => {
       if (!log) return null;
-      const tasks = [log.taskBriefing, log.tbtConducted, log.violationBriefing, log.checklistSubmitted];
+      const tasks = taskFields.map(f => log[f.key]);
       const answered = tasks.filter(t => t !== null && t !== undefined);
       if (answered.length === 0) return null;
       const yesCount = answered.filter(t => t === true).length;
@@ -427,20 +462,26 @@ const saveProject = async () => {
         <div className="p-4">
           {todayLog ? (
             <div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">Time IN</p>
-                  <p className="font-semibold">{todayLog.timeIn || '-'}</p>
+              {/* Time IN/OUT */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-600">Time IN</p>
+                  <p className="font-semibold text-blue-700">{todayLog.timeIn || '-'}</p>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">Time OUT</p>
-                  <p className="font-semibold">{todayLog.timeOut || '-'}</p>
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-600">Time OUT</p>
+                  <p className="font-semibold text-blue-700">{todayLog.timeOut || '-'}</p>
                 </div>
-                <TaskStatus value={todayLog.taskBriefing} label="Task Briefing" />
-                <TaskStatus value={todayLog.tbtConducted} label="TBT Conducted" />
-                <TaskStatus value={todayLog.violationBriefing} label="Violation Brief" />
-                <TaskStatus value={todayLog.checklistSubmitted} label="Checklist" />
               </div>
+              
+              {/* Task Status Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                {taskFields.map(f => (
+                  <TaskStatus key={f.key} value={todayLog[f.key]} label={f.label} />
+                ))}
+              </div>
+              
+              {/* Daily Score */}
               {score && (
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg flex items-center justify-between">
                   <span className="text-sm font-medium text-blue-700">Daily Score</span>
@@ -865,12 +906,12 @@ const saveProject = async () => {
       {/* DAILY LOG MODAL */}
       {modal === 'dailyLog' && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-md">
-            <div className="flex justify-between items-center p-5 border-b">
+          <div className="bg-white rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-5 border-b sticky top-0 bg-white">
               <h2 className="text-xl font-semibold">Daily Log - {selectedDate}</h2>
               <button onClick={() => setModal(null)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium mb-1">Time IN</label>
@@ -883,10 +924,19 @@ const saveProject = async () => {
               </div>
               
               {[
-                { key: 'taskBriefing', label: 'Task Briefing Submitted' },
-                { key: 'tbtConducted', label: 'TBT Conducted' },
-                { key: 'violationBriefing', label: 'Violation Briefing Conducted' },
-                { key: 'checklistSubmitted', label: 'Daily Checklist Submitted' }
+                { key: 'inductionsCovered', label: 'New inductions covered this week?' },
+                { key: 'barcodeImplemented', label: 'Barcode implemented 100%?' },
+                { key: 'attendanceVerified', label: 'Time IN/OUT verified?' },
+                { key: 'taskBriefing', label: 'Task briefing prepared & submitted this week?' },
+                { key: 'tbtConducted', label: 'Toolbox Talk conducted?' },
+                { key: 'violationBriefing', label: 'Violation briefing conducted (10 per week)?' },
+                { key: 'safetyObservationsRecorded', label: 'At least 2 safety observations recorded today?' },
+                { key: 'sorNcrClosed', label: 'Closed 90% SOR/NCRs this week?' },
+                { key: 'mockDrillParticipated', label: 'Participated in mock drill this month?' },
+                { key: 'campaignParticipated', label: 'Participated in campaign this month?' },
+                { key: 'monthlyInspectionsCompleted', label: 'Monthly inspections 100% completed?' },
+                { key: 'nearMissReported', label: 'Near miss reported this month?' },
+                { key: 'weeklyTrainingBriefed', label: 'Weekly training briefed to supervisors/workers?' }
               ].map(item => (
                 <div key={item.key} className="p-3 border rounded-lg">
                   <p className="text-sm font-medium mb-2">{item.label}</p>
@@ -894,31 +944,31 @@ const saveProject = async () => {
                     <button
                       type="button"
                       onClick={() => setForm({ ...form, [item.key]: true })}
-                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 ${
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1 ${
                         form[item.key] === true
                           ? 'bg-green-600 text-white'
                           : 'bg-gray-100 text-gray-600 hover:bg-green-50 hover:text-green-600'
                       }`}
                     >
-                      <CheckCircle size={16} />
-                      Yes (1)
+                      <CheckCircle size={14} />
+                      Yes
                     </button>
                     <button
                       type="button"
                       onClick={() => setForm({ ...form, [item.key]: false })}
-                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 ${
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1 ${
                         form[item.key] === false
                           ? 'bg-red-600 text-white'
                           : 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600'
                       }`}
                     >
-                      <XCircle size={16} />
-                      No (0)
+                      <XCircle size={14} />
+                      No
                     </button>
                     <button
                       type="button"
                       onClick={() => setForm({ ...form, [item.key]: null })}
-                      className={`py-2 px-3 rounded-lg text-sm font-medium transition ${
+                      className={`py-1.5 px-2 rounded-lg text-sm font-medium transition ${
                         form[item.key] === null || form[item.key] === undefined
                           ? 'bg-gray-600 text-white'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -930,7 +980,7 @@ const saveProject = async () => {
                 </div>
               ))}
               
-              <button onClick={saveDailyLog} disabled={loading} className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              <button onClick={saveDailyLog} disabled={loading} className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 sticky bottom-0">
                 {loading ? 'Saving...' : 'Save Log'}
               </button>
             </div>

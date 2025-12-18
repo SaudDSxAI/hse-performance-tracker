@@ -81,7 +81,18 @@ const transformCandidate = (candidate, dailyLogs = [], monthlyKPIs = []) => {
       taskBriefing: log.task_briefing,
       tbtConducted: log.tbt_conducted,
       violationBriefing: log.violation_briefing,
-      checklistSubmitted: log.checklist_submitted
+      checklistSubmitted: log.checklist_submitted,
+      // New fields
+      inductionsCovered: log.inductions_covered,
+      barcodeImplemented: log.barcode_implemented,
+      attendanceVerified: log.attendance_verified,
+      safetyObservationsRecorded: log.safety_observations_recorded,
+      sorNcrClosed: log.sor_ncr_closed,
+      mockDrillParticipated: log.mock_drill_participated,
+      campaignParticipated: log.campaign_participated,
+      monthlyInspectionsCompleted: log.monthly_inspections_completed,
+      nearMissReported: log.near_miss_reported,
+      weeklyTrainingBriefed: log.weekly_training_briefed
     };
   });
 
@@ -219,7 +230,18 @@ export const createDailyLog = async (candidateId, date, log) => {
       task_briefing: log.taskBriefing,
       tbt_conducted: log.tbtConducted,
       violation_briefing: log.violationBriefing,
-      checklist_submitted: log.checklistSubmitted
+      checklist_submitted: log.checklistSubmitted,
+      // New fields
+      inductions_covered: log.inductionsCovered,
+      barcode_implemented: log.barcodeImplemented,
+      attendance_verified: log.attendanceVerified,
+      safety_observations_recorded: log.safetyObservationsRecorded,
+      sor_ncr_closed: log.sorNcrClosed,
+      mock_drill_participated: log.mockDrillParticipated,
+      campaign_participated: log.campaignParticipated,
+      monthly_inspections_completed: log.monthlyInspectionsCompleted,
+      near_miss_reported: log.nearMissReported,
+      weekly_training_briefed: log.weeklyTrainingBriefed
     }),
   });
   return data;

@@ -52,11 +52,24 @@ class DailyLogBase(BaseModel):
     log_date: date
     time_in: Optional[time] = None
     time_out: Optional[time] = None
-    task_briefing: bool = False
-    tbt_conducted: bool = False
-    violation_briefing: bool = False
-    checklist_submitted: bool = False
-    observations_count: int = 0
+    
+    # Original fields
+    task_briefing: Optional[bool] = None
+    tbt_conducted: Optional[bool] = None
+    violation_briefing: Optional[bool] = None
+    checklist_submitted: Optional[bool] = None
+    
+    # New fields
+    inductions_covered: Optional[bool] = None
+    barcode_implemented: Optional[bool] = None
+    attendance_verified: Optional[bool] = None
+    safety_observations_recorded: Optional[bool] = None
+    sor_ncr_closed: Optional[bool] = None
+    mock_drill_participated: Optional[bool] = None
+    campaign_participated: Optional[bool] = None
+    monthly_inspections_completed: Optional[bool] = None
+    near_miss_reported: Optional[bool] = None
+    weekly_training_briefed: Optional[bool] = None
 
 class DailyLogCreate(DailyLogBase):
     candidate_id: int

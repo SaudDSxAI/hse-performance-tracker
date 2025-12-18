@@ -32,11 +32,24 @@ class DailyLog(Base):
     log_date = Column(Date, nullable=False)
     time_in = Column(Time)
     time_out = Column(Time)
-    task_briefing = Column(Boolean, default=False)
-    tbt_conducted = Column(Boolean, default=False)
-    violation_briefing = Column(Boolean, default=False)
-    checklist_submitted = Column(Boolean, default=False)
-    observations_count = Column(Integer, default=0)
+    
+    # Original fields (now nullable for Yes/No/Empty)
+    task_briefing = Column(Boolean, nullable=True)
+    tbt_conducted = Column(Boolean, nullable=True)
+    violation_briefing = Column(Boolean, nullable=True)
+    checklist_submitted = Column(Boolean, nullable=True)
+    
+    # New fields
+    inductions_covered = Column(Boolean, nullable=True)           # New inductions covered this week?
+    barcode_implemented = Column(Boolean, nullable=True)          # Bar code implemented 100%?
+    attendance_verified = Column(Boolean, nullable=True)          # Time IN/OUT verified?
+    safety_observations_recorded = Column(Boolean, nullable=True) # At least 2 safety observations today?
+    sor_ncr_closed = Column(Boolean, nullable=True)               # Closed 90% SOR/NCRs this week?
+    mock_drill_participated = Column(Boolean, nullable=True)      # Participated in mock drill this month?
+    campaign_participated = Column(Boolean, nullable=True)        # Participated in campaign this month?
+    monthly_inspections_completed = Column(Boolean, nullable=True)# Monthly inspections 100% completed?
+    near_miss_reported = Column(Boolean, nullable=True)           # Near miss reported this month?
+    weekly_training_briefed = Column(Boolean, nullable=True)      # Weekly training briefed to workers?
 
 class MonthlyKPI(Base):
     __tablename__ = "monthly_kpis"
