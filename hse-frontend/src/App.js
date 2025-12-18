@@ -44,8 +44,11 @@ export default function App() {
     to: new Date().toISOString().split('T')[0]
   });
   const [photoCandidate, setPhotoCandidate] = useState(null); // For photo upload modal
+  const [tempPhoto, setTempPhoto] = useState(null); // For cropping preview
+  const [cropPosition, setCropPosition] = useState({ x: 0, y: 0, scale: 1 }); // For adjusting photo
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const canvasRef = useRef(null);
 
   // Fetch projects on load
   useEffect(() => {
@@ -249,37 +252,80 @@ const saveProject = async () => {
     setForm({ ...form, highRisk: current.includes(risk) ? current.filter(r => r !== risk) : [...current, risk] });
   };
 
-  // Photo upload handler
-  const handlePhotoUpload = async (event, candidate) => {
+  // Photo upload handler - Step 1: Load image for cropping
+  const handlePhotoSelect = (event) => {
     const file = event.target.files[0];
     if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setTempPhoto(reader.result);
+      setCropPosition({ x: 0, y: 0, scale: 1 });
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input so same file can be selected again
+    event.target.value = '';
+  };
+
+  // Photo upload handler - Step 2: Crop and save
+  const saveCroppedPhoto = async () => {
+    if (!tempPhoto || !photoCandidate) return;
 
     try {
       setLoading(true);
       
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Photo = reader.result;
+      // Create canvas for cropping
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = async () => {
+        // Output size (square)
+        const outputSize = 300;
+        canvas.width = outputSize;
+        canvas.height = outputSize;
+        
+        // Calculate crop dimensions
+        const minDim = Math.min(img.width, img.height);
+        const scale = cropPosition.scale;
+        const cropSize = minDim / scale;
+        
+        // Center point with offset
+        const centerX = img.width / 2 + (cropPosition.x * img.width / 200);
+        const centerY = img.height / 2 + (cropPosition.y * img.height / 200);
+        
+        // Source coordinates
+        const sx = Math.max(0, Math.min(centerX - cropSize / 2, img.width - cropSize));
+        const sy = Math.max(0, Math.min(centerY - cropSize / 2, img.height - cropSize));
+        
+        // Draw cropped image
+        ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, outputSize, outputSize);
+        
+        // Convert to base64
+        const croppedBase64 = canvas.toDataURL('image/jpeg', 0.8);
         
         // Update candidate with new photo
         const candidateData = {
-          name: candidate.name,
-          photo: base64Photo,
-          role: candidate.role || ''
+          name: photoCandidate.name,
+          photo: croppedBase64,
+          role: photoCandidate.role || ''
         };
 
-        await api.updateCandidate(candidate.id, candidateData, selectedProject.id);
+        await api.updateCandidate(photoCandidate.id, candidateData, selectedProject.id);
         
         // Refresh data
         const candidates = await api.getCandidatesByProject(selectedProject.id);
         setSelectedProject({ ...selectedProject, candidates });
         
+        setTempPhoto(null);
         setPhotoCandidate(null);
+        setCropPosition({ x: 0, y: 0, scale: 1 });
         setLoading(false);
         alert('Photo updated successfully!');
       };
-      reader.readAsDataURL(file);
+      
+      img.src = tempPhoto;
     } catch (error) {
       console.error('Error uploading photo:', error);
       alert('Failed to upload photo');
@@ -287,9 +333,15 @@ const saveProject = async () => {
     }
   };
 
+  const cancelCrop = () => {
+    setTempPhoto(null);
+    setCropPosition({ x: 0, y: 0, scale: 1 });
+  };
+
   const openPhotoModal = (e, candidate) => {
     e.stopPropagation();
     setPhotoCandidate(candidate);
+    setTempPhoto(null);
   };
 
   // Calculate candidate performance metrics for chart
@@ -730,19 +782,19 @@ const saveProject = async () => {
                     const performancePercentage = getOverallPerformance(c);
                     return (
                       <div key={c.id} className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => goToCandidate(c)}>
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex gap-3 min-w-0">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex gap-4 min-w-0 items-center">
                             <div 
-                              className="relative group flex-shrink-0"
+                              className="relative group flex-shrink-0 cursor-pointer"
                               onClick={(e) => openPhotoModal(e, c)}
                             >
-                              <img src={c.photo} alt="" className="w-12 h-12 rounded-full object-cover" />
+                              <img src={c.photo} alt="" className="w-16 h-16 rounded-full object-cover border-2 border-gray-200" />
                               <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Camera size={16} className="text-white" />
+                                <Camera size={20} className="text-white" />
                               </div>
                             </div>
                             <div className="min-w-0">
-                              <p className="font-medium text-gray-900">{c.name}</p>
+                              <p className="font-medium text-gray-900 text-lg">{c.name}</p>
                               {c.role && <p className="text-sm text-gray-500">{c.role}</p>}
                             </div>
                           </div>
@@ -1096,64 +1148,138 @@ const saveProject = async () => {
       {/* PHOTO UPLOAD MODAL */}
       {photoCandidate && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-sm">
+          <div className="bg-white rounded-xl w-full max-w-md">
             <div className="flex justify-between items-center p-5 border-b">
-              <h2 className="text-xl font-semibold">Update Photo</h2>
-              <button onClick={() => setPhotoCandidate(null)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <h2 className="text-xl font-semibold">{tempPhoto ? 'Adjust Photo' : 'Update Photo'}</h2>
+              <button onClick={() => { setPhotoCandidate(null); setTempPhoto(null); }} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-5">
-              {/* Current Photo */}
-              <div className="flex justify-center mb-6">
-                <img 
-                  src={photoCandidate.photo} 
-                  alt={photoCandidate.name} 
-                  className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
-                />
-              </div>
-              <p className="text-center text-gray-600 mb-4">{photoCandidate.name}</p>
-              
-              {/* Hidden file inputs */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => handlePhotoUpload(e, photoCandidate)}
-              />
-              <input
-                type="file"
-                ref={cameraInputRef}
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={(e) => handlePhotoUpload(e, photoCandidate)}
-              />
-              
-              {/* Buttons */}
-              <div className="space-y-3">
-                <button
-                  onClick={() => cameraInputRef.current?.click()}
-                  disabled={loading}
-                  className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                >
-                  <Camera size={20} />
-                  {loading ? 'Uploading...' : 'Take Photo'}
-                </button>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={loading}
-                  className="w-full flex items-center justify-center gap-3 bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 disabled:opacity-50"
-                >
-                  <Upload size={20} />
-                  {loading ? 'Uploading...' : 'Upload from Gallery'}
-                </button>
-                <button
-                  onClick={() => setPhotoCandidate(null)}
-                  className="w-full text-gray-500 px-4 py-2 hover:text-gray-700"
-                >
-                  Cancel
-                </button>
-              </div>
+              {!tempPhoto ? (
+                <>
+                  {/* Current Photo */}
+                  <div className="flex justify-center mb-4">
+                    <img 
+                      src={photoCandidate.photo} 
+                      alt={photoCandidate.name} 
+                      className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
+                    />
+                  </div>
+                  <p className="text-center text-gray-600 mb-6 font-medium">{photoCandidate.name}</p>
+                  
+                  {/* Hidden file inputs */}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoSelect}
+                  />
+                  <input
+                    type="file"
+                    ref={cameraInputRef}
+                    accept="image/*"
+                    capture="user"
+                    className="hidden"
+                    onChange={handlePhotoSelect}
+                  />
+                  
+                  {/* Buttons */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700"
+                    >
+                      <Camera size={20} />
+                      Take Photo
+                    </button>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full flex items-center justify-center gap-3 bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200"
+                    >
+                      <Upload size={20} />
+                      Choose from Gallery
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Photo Preview with Crop */}
+                  <div className="flex justify-center mb-4">
+                    <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-blue-500">
+                      <img 
+                        src={tempPhoto} 
+                        alt="Preview" 
+                        className="absolute"
+                        style={{
+                          width: `${100 * cropPosition.scale}%`,
+                          height: `${100 * cropPosition.scale}%`,
+                          left: `${50 - (cropPosition.scale * 50) + cropPosition.x}%`,
+                          top: `${50 - (cropPosition.scale * 50) + cropPosition.y}%`,
+                          objectFit: 'cover'
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Adjustment Controls */}
+                  <div className="space-y-4 mb-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Zoom</label>
+                      <input
+                        type="range"
+                        min="1"
+                        max="3"
+                        step="0.1"
+                        value={cropPosition.scale}
+                        onChange={(e) => setCropPosition({ ...cropPosition, scale: parseFloat(e.target.value) })}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Horizontal</label>
+                        <input
+                          type="range"
+                          min="-30"
+                          max="30"
+                          value={cropPosition.x}
+                          onChange={(e) => setCropPosition({ ...cropPosition, x: parseInt(e.target.value) })}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Vertical</label>
+                        <input
+                          type="range"
+                          min="-30"
+                          max="30"
+                          value={cropPosition.y}
+                          onChange={(e) => setCropPosition({ ...cropPosition, y: parseInt(e.target.value) })}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={saveCroppedPhoto}
+                      disabled={loading}
+                      className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      <CheckCircle size={20} />
+                      {loading ? 'Saving...' : 'Save Photo'}
+                    </button>
+                    <button
+                      onClick={cancelCrop}
+                      className="w-full text-gray-500 px-4 py-2 hover:text-gray-700"
+                    >
+                      Choose Different Photo
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
