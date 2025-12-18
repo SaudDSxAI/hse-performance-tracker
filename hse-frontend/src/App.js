@@ -46,8 +46,13 @@ export default function App() {
   const [photoCandidate, setPhotoCandidate] = useState(null); // For photo upload modal
   const [tempPhoto, setTempPhoto] = useState(null); // For cropping preview
   const [cropPosition, setCropPosition] = useState({ x: 0, y: 0, scale: 1 }); // For adjusting photo
+  const [hseLeadTempPhoto, setHseLeadTempPhoto] = useState(null); // For HSE Lead photo cropping
+  const [hseLeadCropPosition, setHseLeadCropPosition] = useState({ x: 0, y: 0, scale: 1 });
+  const [showHseLeadPhotoCrop, setShowHseLeadPhotoCrop] = useState(false);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const hseLeadFileInputRef = useRef(null);
+  const hseLeadCameraInputRef = useRef(null);
 
   // Fetch projects on load
   useEffect(() => {
@@ -394,6 +399,79 @@ const saveProject = async () => {
     e.stopPropagation();
     setPhotoCandidate(candidate);
     setTempPhoto(null);
+  };
+
+  // HSE Lead Photo Handlers
+  const handleHseLeadPhotoSelect = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setHseLeadTempPhoto(reader.result);
+      setHseLeadCropPosition({ x: 0, y: 0, scale: 1 });
+      setShowHseLeadPhotoCrop(true);
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  const saveHseLeadCroppedPhoto = () => {
+    if (!hseLeadTempPhoto) return;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      const outputSize = 300;
+      canvas.width = outputSize;
+      canvas.height = outputSize;
+      
+      const imgWidth = img.width;
+      const imgHeight = img.height;
+      const imgAspect = imgWidth / imgHeight;
+      let srcWidth, srcHeight, srcX, srcY;
+      
+      if (imgAspect > 1) {
+        srcHeight = imgHeight;
+        srcWidth = imgHeight;
+        srcX = (imgWidth - srcWidth) / 2;
+        srcY = 0;
+      } else {
+        srcWidth = imgWidth;
+        srcHeight = imgWidth;
+        srcX = 0;
+        srcY = (imgHeight - srcHeight) / 2;
+      }
+      
+      const scale = hseLeadCropPosition.scale;
+      const zoomedSize = Math.min(srcWidth, srcHeight) / scale;
+      const offsetX = (hseLeadCropPosition.x / 100) * zoomedSize;
+      const offsetY = (hseLeadCropPosition.y / 100) * zoomedSize;
+      
+      const finalSrcX = srcX + (srcWidth - zoomedSize) / 2 + offsetX;
+      const finalSrcY = srcY + (srcHeight - zoomedSize) / 2 + offsetY;
+      
+      const clampedSrcX = Math.max(0, Math.min(finalSrcX, imgWidth - zoomedSize));
+      const clampedSrcY = Math.max(0, Math.min(finalSrcY, imgHeight - zoomedSize));
+      
+      ctx.drawImage(img, clampedSrcX, clampedSrcY, zoomedSize, zoomedSize, 0, 0, outputSize, outputSize);
+      
+      const croppedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+      setForm({ ...form, hseLeadPhoto: croppedBase64 });
+      setHseLeadTempPhoto(null);
+      setShowHseLeadPhotoCrop(false);
+      setHseLeadCropPosition({ x: 0, y: 0, scale: 1 });
+    };
+    
+    img.src = hseLeadTempPhoto;
+  };
+
+  const cancelHseLeadCrop = () => {
+    setHseLeadTempPhoto(null);
+    setShowHseLeadPhotoCrop(false);
+    setHseLeadCropPosition({ x: 0, y: 0, scale: 1 });
   };
 
   // Calculate candidate performance metrics for chart
@@ -1011,6 +1089,143 @@ const saveProject = async () => {
                 <label className="block text-sm font-medium mb-1">HSE Lead Name *</label>
                 <input value={form.hseLeadName || ''} onChange={e => setForm({ ...form, hseLeadName: e.target.value })} className="w-full border rounded-lg px-3 py-2" placeholder="Enter HSE lead name" />
               </div>
+              
+              {/* HSE Lead Photo Section */}
+              <div>
+                <label className="block text-sm font-medium mb-2">HSE Lead Photo</label>
+                {!showHseLeadPhotoCrop ? (
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <img 
+                        src={form.hseLeadPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(form.hseLeadName || 'HSE')}&size=150&background=047857&color=fff`} 
+                        alt="HSE Lead" 
+                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="file"
+                        ref={hseLeadFileInputRef}
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleHseLeadPhotoSelect}
+                      />
+                      <input
+                        type="file"
+                        ref={hseLeadCameraInputRef}
+                        accept="image/*"
+                        capture="user"
+                        className="hidden"
+                        onChange={handleHseLeadPhotoSelect}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => hseLeadCameraInputRef.current?.click()}
+                        className="w-full flex items-center justify-center gap-2 bg-emerald-700 text-white px-3 py-2 rounded-lg hover:bg-emerald-800 text-sm"
+                      >
+                        <Camera size={16} />
+                        Take Photo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => hseLeadFileInputRef.current?.click()}
+                        className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 text-sm"
+                      >
+                        <Upload size={16} />
+                        Upload
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Photo Preview with Crop */}
+                    <div className="flex justify-center">
+                      <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-emerald-600 bg-gray-900">
+                        <img 
+                          src={hseLeadTempPhoto} 
+                          alt="Preview" 
+                          className="absolute w-full h-full"
+                          style={{
+                            objectFit: 'cover',
+                            objectPosition: `${50 + hseLeadCropPosition.x}% ${50 + hseLeadCropPosition.y}%`,
+                            transform: `scale(${hseLeadCropPosition.scale})`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Adjustment Controls */}
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-sm font-medium text-gray-700 mb-1">
+                          <span>Zoom</span>
+                          <span>{hseLeadCropPosition.scale.toFixed(1)}x</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="2.5"
+                          step="0.1"
+                          value={hseLeadCropPosition.scale}
+                          onChange={(e) => setHseLeadCropPosition({ ...hseLeadCropPosition, scale: parseFloat(e.target.value) })}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">← Left / Right →</span>
+                          <input
+                            type="range"
+                            min="-50"
+                            max="50"
+                            value={hseLeadCropPosition.x}
+                            onChange={(e) => setHseLeadCropPosition({ ...hseLeadCropPosition, x: parseInt(e.target.value) })}
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">↑ Up / Down ↓</span>
+                          <input
+                            type="range"
+                            min="-50"
+                            max="50"
+                            value={hseLeadCropPosition.y}
+                            onChange={(e) => setHseLeadCropPosition({ ...hseLeadCropPosition, y: parseInt(e.target.value) })}
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setHseLeadCropPosition({ x: 0, y: 0, scale: 1 })}
+                        className="w-full text-sm text-emerald-700 hover:text-emerald-800"
+                      >
+                        Reset to Center
+                      </button>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={saveHseLeadCroppedPhoto}
+                        className="flex-1 flex items-center justify-center gap-2 bg-emerald-700 text-white px-3 py-2 rounded-lg hover:bg-emerald-800"
+                      >
+                        <CheckCircle size={16} />
+                        Save Photo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelHseLeadCrop}
+                        className="flex-1 text-gray-500 px-3 py-2 hover:text-gray-700 border rounded-lg"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-sm font-medium mb-1">Manpower</label>
