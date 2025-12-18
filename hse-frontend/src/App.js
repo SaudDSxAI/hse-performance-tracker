@@ -524,11 +524,11 @@ const saveProject = async () => {
   // Breadcrumb
   const Breadcrumb = () => (
     <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-      <button onClick={goHome} className="hover:text-blue-600 flex items-center gap-1"><Home size={14} />Home</button>
+      <button onClick={goHome} className="hover:text-emerald-700 flex items-center gap-1"><Home size={14} />Home</button>
       {selectedProject && (
         <>
           <ChevronRight size={14} />
-          <button onClick={() => goToProject(selectedProject)} className={`hover:text-blue-600 ${!selectedCandidate ? 'text-gray-800 font-medium' : ''}`}>{selectedProject.name}</button>
+          <button onClick={() => goToProject(selectedProject)} className={`hover:text-emerald-700 ${!selectedCandidate ? 'text-gray-800 font-medium' : ''}`}>{selectedProject.name}</button>
         </>
       )}
       {selectedCandidate && (
@@ -604,7 +604,7 @@ const saveProject = async () => {
           <h2 className="font-semibold text-lg flex items-center gap-2"><Calendar size={20} />Daily Monitoring</h2>
           <div className="flex items-center gap-2">
             <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="border rounded-lg px-3 py-2 text-sm" />
-            <button onClick={() => { setForm(todayLog || { ...emptyDailyLog }); setModal('dailyLog'); }} className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700">
+            <button onClick={() => { setForm(todayLog || { ...emptyDailyLog }); setModal('dailyLog'); }} className="bg-emerald-700 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-800">
               {todayLog ? 'Edit' : 'Add'}
             </button>
           </div>
@@ -614,13 +614,13 @@ const saveProject = async () => {
             <div>
               {/* Time IN/OUT */}
               <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-xs text-blue-600">Time IN</p>
-                  <p className="font-semibold text-blue-700">{todayLog.timeIn || '-'}</p>
+                <div className="p-3 bg-emerald-50 rounded-lg">
+                  <p className="text-xs text-emerald-700">Time IN</p>
+                  <p className="font-semibold text-emerald-700">{todayLog.timeIn || '-'}</p>
                 </div>
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-xs text-blue-600">Time OUT</p>
-                  <p className="font-semibold text-blue-700">{todayLog.timeOut || '-'}</p>
+                <div className="p-3 bg-emerald-50 rounded-lg">
+                  <p className="text-xs text-emerald-700">Time OUT</p>
+                  <p className="font-semibold text-emerald-700">{todayLog.timeOut || '-'}</p>
                 </div>
               </div>
               
@@ -633,9 +633,9 @@ const saveProject = async () => {
               
               {/* Daily Score */}
               {score && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg flex items-center justify-between">
-                  <span className="text-sm font-medium text-blue-700">Daily Score</span>
-                  <span className="text-lg font-bold text-blue-700">{score.yes}/{score.total} = {score.percentage}%</span>
+                <div className="mt-4 p-3 bg-emerald-50 rounded-lg flex items-center justify-between">
+                  <span className="text-sm font-medium text-emerald-700">Daily Score</span>
+                  <span className="text-lg font-bold text-emerald-700">{score.yes}/{score.total} = {score.percentage}%</span>
                 </div>
               )}
             </div>
@@ -654,7 +654,7 @@ const saveProject = async () => {
       <div className="bg-white rounded-xl shadow-sm border">
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="font-semibold text-lg flex items-center gap-2"><Activity size={20} />Monthly KPIs</h2>
-          <button onClick={() => { setForm({ ...kpis }); setModal('kpis'); }} className="text-blue-600 text-sm hover:underline">Update Values</button>
+          <button onClick={() => { setForm({ ...kpis }); setModal('kpis'); }} className="text-emerald-700 text-sm hover:underline">Update Values</button>
         </div>
         <div className="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
@@ -694,7 +694,7 @@ const saveProject = async () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-700 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -705,7 +705,7 @@ const saveProject = async () => {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b p-4">
         <div className="max-w-6xl mx-auto flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-emerald-700 rounded-lg flex items-center justify-center">
             <Shield className="text-white" size={24} />
           </div>
           <h1 className="text-xl font-bold text-gray-800">HSE Performance Tracker</h1>
@@ -718,7 +718,7 @@ const saveProject = async () => {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold">Projects</h1>
-              <button onClick={() => { setForm({ highRisk: [] }); setModal('project'); }} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+              <button onClick={() => { setForm({ highRisk: [] }); setModal('project'); }} className="flex items-center gap-2 bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800">
                 <Plus size={20} />Add Project
               </button>
             </div>
@@ -728,7 +728,7 @@ const saveProject = async () => {
                 <Building2 size={48} className="mx-auto mb-4 text-gray-300" />
                 <h3 className="text-lg font-medium text-gray-600 mb-2">No Projects Yet</h3>
                 <p className="text-gray-500 mb-4">Create your first project to get started</p>
-                <button onClick={() => { setForm({ highRisk: [] }); setModal('project'); }} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                <button onClick={() => { setForm({ highRisk: [] }); setModal('project'); }} className="bg-emerald-700 text-white px-6 py-2 rounded-lg hover:bg-emerald-800">
                   Add Project
                 </button>
               </div>
@@ -752,9 +752,9 @@ const saveProject = async () => {
                         </div>
                       </div>
                       <div className="grid grid-cols-3 gap-2 mb-3 text-sm">
-                        <div className="p-2 bg-blue-50 rounded text-center">
-                          <p className="font-bold text-blue-700">{p.manpower}</p>
-                          <p className="text-xs text-blue-600">Manpower</p>
+                        <div className="p-2 bg-emerald-50 rounded text-center">
+                          <p className="font-bold text-emerald-700">{p.manpower}</p>
+                          <p className="text-xs text-emerald-700">Manpower</p>
                         </div>
                         <div className="p-2 bg-green-50 rounded text-center">
                           <p className="font-bold text-green-700">{p.manHours}</p>
@@ -793,7 +793,7 @@ const saveProject = async () => {
                             highRisk: p.highRisk || []
                           }); 
                           setModal('project'); 
-                        }} className="p-2 hover:bg-blue-50 rounded-lg">
+                        }} className="p-2 hover:bg-emerald-50 rounded-lg">
                           <Edit2 size={16} />
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); deleteProjectHandler(p.id); }} className="p-2 hover:bg-red-50 rounded-lg text-red-500">
@@ -816,7 +816,7 @@ const saveProject = async () => {
             <div className="bg-white rounded-xl shadow-sm border">
               <div className="p-4 border-b flex justify-between items-center">
                 <h2 className="font-semibold text-lg flex items-center gap-2"><Users size={20} />Candidates</h2>
-                <button onClick={() => { setForm({}); setModal('candidate'); }} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
+                <button onClick={() => { setForm({}); setModal('candidate'); }} className="flex items-center gap-2 bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 text-sm">
                   <Plus size={16} />Add Candidate
                 </button>
               </div>
@@ -824,7 +824,7 @@ const saveProject = async () => {
                 <div className="p-8 text-center text-gray-500">
                   <User size={32} className="mx-auto mb-2 text-gray-300" />
                   <p>No candidates yet</p>
-                  <button onClick={() => { setForm({}); setModal('candidate'); }} className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                  <button onClick={() => { setForm({}); setModal('candidate'); }} className="mt-4 bg-emerald-700 text-white px-6 py-2 rounded-lg hover:bg-emerald-800">
                     Add Your First Candidate
                   </button>
                 </div>
@@ -860,7 +860,7 @@ const saveProject = async () => {
                               </div>
                             )}
                             <div className="flex items-center gap-1">
-                              <button onClick={(e) => { e.stopPropagation(); setForm(c); setModal('candidate'); }} className="p-2 hover:bg-blue-50 rounded-lg"><Edit2 size={16} /></button>
+                              <button onClick={(e) => { e.stopPropagation(); setForm(c); setModal('candidate'); }} className="p-2 hover:bg-emerald-50 rounded-lg"><Edit2 size={16} /></button>
                               <button onClick={(e) => { e.stopPropagation(); deleteCandidateHandler(c.id); }} className="p-2 hover:bg-red-50 rounded-lg text-red-500"><Trash2 size={16} /></button>
                               <ChevronRight size={20} className="text-gray-400" />
                             </div>
@@ -912,7 +912,7 @@ const saveProject = async () => {
                             onClick={() => setChartDateRange({ from: fromDate, to: toDate })}
                             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                               isActive 
-                                ? 'bg-blue-600 text-white' 
+                                ? 'bg-emerald-700 text-white' 
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                           >
@@ -959,7 +959,7 @@ const saveProject = async () => {
                               return (
                                 <div className="bg-white p-2 border rounded shadow-sm">
                                   <p className="text-sm font-medium">{data.name}</p>
-                                  <p className="text-sm text-blue-600">
+                                  <p className="text-sm text-emerald-700">
                                     {data.value}% ({data.yes}/{data.total} Yes)
                                   </p>
                                 </div>
@@ -968,7 +968,7 @@ const saveProject = async () => {
                             return null;
                           }}
                         />
-                        <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="value" fill="#047857" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
@@ -1029,13 +1029,13 @@ const saveProject = async () => {
                 <label className="block text-sm font-medium mb-2">High-Risk Activities</label>
                 <div className="flex flex-wrap gap-2">
                   {riskOptions.map(r => (
-                    <button key={r.key} type="button" onClick={() => toggleRisk(r.key)} className={`px-3 py-2 rounded-lg border-2 flex items-center gap-2 text-sm ${(form.highRisk || []).includes(r.key) ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                    <button key={r.key} type="button" onClick={() => toggleRisk(r.key)} className={`px-3 py-2 rounded-lg border-2 flex items-center gap-2 text-sm ${(form.highRisk || []).includes(r.key) ? 'border-emerald-600 bg-emerald-50' : 'border-gray-200'}`}>
                       <r.icon size={16} />{r.label}
                     </button>
                   ))}
                 </div>
               </div>
-              <button onClick={saveProject} disabled={!form.name || !form.location || !form.company || !form.hseLeadName || loading} className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              <button onClick={saveProject} disabled={!form.name || !form.location || !form.company || !form.hseLeadName || loading} className="w-full bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50">
                 {loading ? 'Saving...' : (form.id ? 'Update' : 'Create') + ' Project'}
               </button>
             </div>
@@ -1060,7 +1060,7 @@ const saveProject = async () => {
                 <label className="block text-sm font-medium mb-1">Role / Position</label>
                 <input value={form.role || ''} onChange={e => setForm({ ...form, role: e.target.value })} className="w-full border rounded-lg px-3 py-2" placeholder="Optional" />
               </div>
-              <button onClick={saveCandidate} disabled={!form.name || loading} className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              <button onClick={saveCandidate} disabled={!form.name || loading} className="w-full bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50">
                 {loading ? 'Saving...' : (form.id ? 'Update' : 'Add') + ' Candidate'}
               </button>
             </div>
@@ -1145,7 +1145,7 @@ const saveProject = async () => {
                 </div>
               ))}
               
-              <button onClick={saveDailyLog} disabled={loading} className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 sticky bottom-0">
+              <button onClick={saveDailyLog} disabled={loading} className="w-full bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50 sticky bottom-0">
                 {loading ? 'Saving...' : 'Save Log'}
               </button>
             </div>
@@ -1196,7 +1196,7 @@ const saveProject = async () => {
                   <input type="number" value={form.weeklyReportsClosed || 0} onChange={e => setForm({ ...form, weeklyReportsClosed: parseInt(e.target.value) || 0 })} className="w-full border rounded-lg px-3 py-2" />
                 </div>
               </div>
-              <button onClick={saveMonthlyKPIs} disabled={loading} className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              <button onClick={saveMonthlyKPIs} disabled={loading} className="w-full bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50">
                 {loading ? 'Saving...' : 'Save KPIs'}
               </button>
             </div>
@@ -1246,7 +1246,7 @@ const saveProject = async () => {
                   <div className="space-y-3">
                     <button
                       onClick={() => cameraInputRef.current?.click()}
-                      className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700"
+                      className="w-full flex items-center justify-center gap-3 bg-emerald-700 text-white px-4 py-3 rounded-lg hover:bg-emerald-800"
                     >
                       <Camera size={20} />
                       Take Photo
@@ -1264,7 +1264,7 @@ const saveProject = async () => {
                 <>
                   {/* Photo Preview with Crop */}
                   <div className="flex justify-center mb-4">
-                    <div className="relative w-64 h-64 rounded-full overflow-hidden border-4 border-blue-500 bg-gray-900">
+                    <div className="relative w-64 h-64 rounded-full overflow-hidden border-4 border-emerald-600 bg-gray-900">
                       <img 
                         src={tempPhoto} 
                         alt="Preview" 
@@ -1325,7 +1325,7 @@ const saveProject = async () => {
                     </div>
                     <button
                       onClick={() => setCropPosition({ x: 0, y: 0, scale: 1 })}
-                      className="w-full text-sm text-blue-600 hover:text-blue-700"
+                      className="w-full text-sm text-emerald-700 hover:text-emerald-700"
                     >
                       Reset to Center
                     </button>
@@ -1336,7 +1336,7 @@ const saveProject = async () => {
                     <button
                       onClick={saveCroppedPhoto}
                       disabled={loading}
-                      className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-2 bg-emerald-700 text-white px-4 py-3 rounded-lg hover:bg-emerald-800 disabled:opacity-50"
                     >
                       <CheckCircle size={20} />
                       {loading ? 'Saving...' : 'Save Photo'}
