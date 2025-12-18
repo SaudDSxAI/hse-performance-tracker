@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Plus, Edit2, Trash2, X, MapPin, Users, Building2, AlertTriangle, Calendar, Shield, Flame, Anchor, HardHat, ChevronRight, User, CheckCircle, XCircle, Home, Activity } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, MapPin, Users, Building2, AlertTriangle, Calendar, Shield, Flame, Anchor, HardHat, ChevronRight, User, CheckCircle, XCircle, Home, Activity, Camera, Upload } from 'lucide-react';
 import * as api from './api';
 
 const riskOptions = [
@@ -43,6 +43,9 @@ export default function App() {
     from: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
     to: new Date().toISOString().split('T')[0]
   });
+  const [photoCandidate, setPhotoCandidate] = useState(null); // For photo upload modal
+  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
   // Fetch projects on load
   useEffect(() => {
@@ -244,6 +247,49 @@ const saveProject = async () => {
   const toggleRisk = (risk) => {
     const current = form.highRisk || [];
     setForm({ ...form, highRisk: current.includes(risk) ? current.filter(r => r !== risk) : [...current, risk] });
+  };
+
+  // Photo upload handler
+  const handlePhotoUpload = async (event, candidate) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      setLoading(true);
+      
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Photo = reader.result;
+        
+        // Update candidate with new photo
+        const candidateData = {
+          name: candidate.name,
+          photo: base64Photo,
+          role: candidate.role || ''
+        };
+
+        await api.updateCandidate(candidate.id, candidateData, selectedProject.id);
+        
+        // Refresh data
+        const candidates = await api.getCandidatesByProject(selectedProject.id);
+        setSelectedProject({ ...selectedProject, candidates });
+        
+        setPhotoCandidate(null);
+        setLoading(false);
+        alert('Photo updated successfully!');
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      alert('Failed to upload photo');
+      setLoading(false);
+    }
+  };
+
+  const openPhotoModal = (e, candidate) => {
+    e.stopPropagation();
+    setPhotoCandidate(candidate);
   };
 
   // Calculate candidate performance metrics for chart
@@ -686,7 +732,15 @@ const saveProject = async () => {
                       <div key={c.id} className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => goToCandidate(c)}>
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex gap-3 min-w-0">
-                            <img src={c.photo} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
+                            <div 
+                              className="relative group flex-shrink-0"
+                              onClick={(e) => openPhotoModal(e, c)}
+                            >
+                              <img src={c.photo} alt="" className="w-12 h-12 rounded-full object-cover" />
+                              <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Camera size={16} className="text-white" />
+                              </div>
+                            </div>
                             <div className="min-w-0">
                               <p className="font-medium text-gray-900">{c.name}</p>
                               {c.role && <p className="text-sm text-gray-500">{c.role}</p>}
@@ -1034,6 +1088,72 @@ const saveProject = async () => {
               <button onClick={saveMonthlyKPIs} disabled={loading} className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
                 {loading ? 'Saving...' : 'Save KPIs'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PHOTO UPLOAD MODAL */}
+      {photoCandidate && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-sm">
+            <div className="flex justify-between items-center p-5 border-b">
+              <h2 className="text-xl font-semibold">Update Photo</h2>
+              <button onClick={() => setPhotoCandidate(null)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+            </div>
+            <div className="p-5">
+              {/* Current Photo */}
+              <div className="flex justify-center mb-6">
+                <img 
+                  src={photoCandidate.photo} 
+                  alt={photoCandidate.name} 
+                  className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
+                />
+              </div>
+              <p className="text-center text-gray-600 mb-4">{photoCandidate.name}</p>
+              
+              {/* Hidden file inputs */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handlePhotoUpload(e, photoCandidate)}
+              />
+              <input
+                type="file"
+                ref={cameraInputRef}
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => handlePhotoUpload(e, photoCandidate)}
+              />
+              
+              {/* Buttons */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  <Camera size={20} />
+                  {loading ? 'Uploading...' : 'Take Photo'}
+                </button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-3 bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                >
+                  <Upload size={20} />
+                  {loading ? 'Uploading...' : 'Upload from Gallery'}
+                </button>
+                <button
+                  onClick={() => setPhotoCandidate(null)}
+                  className="w-full text-gray-500 px-4 py-2 hover:text-gray-700"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
