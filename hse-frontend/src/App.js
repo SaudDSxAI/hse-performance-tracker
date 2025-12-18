@@ -79,7 +79,30 @@ export default function App() {
   // Navigation
   const goHome = () => { setView('home'); setSelectedProject(null); setSelectedCandidate(null); };
   const goToProject = (project) => { setSelectedProject(project); setSelectedCandidate(null); setView('project'); };
-  const goToCandidate = (candidate) => { setSelectedCandidate(candidate); setView('candidate'); };
+  const goToCandidate = (candidate) => { 
+    setSelectedCandidate(candidate); 
+    setView('candidate');
+    
+    // Check if today's log is empty - auto-open daily log modal
+    const today = new Date().toISOString().split('T')[0];
+    const todayLog = candidate.dailyLogs?.[today];
+    
+    // Check if all tasks are empty/null
+    const taskKeys = [
+      'inductionsCovered', 'barcodeImplemented', 'attendanceVerified', 'taskBriefing',
+      'tbtConducted', 'violationBriefing', 'safetyObservationsRecorded', 'sorNcrClosed',
+      'mockDrillParticipated', 'campaignParticipated', 'monthlyInspectionsCompleted',
+      'nearMissReported', 'weeklyTrainingBriefed'
+    ];
+    
+    const isLogEmpty = !todayLog || taskKeys.every(key => todayLog[key] === null || todayLog[key] === undefined);
+    
+    if (isLogEmpty) {
+      setSelectedDate(today);
+      setForm(todayLog || { ...emptyDailyLog });
+      setModal('dailyLog');
+    }
+  };
 
   // Project CRUD
 const saveProject = async () => {
@@ -918,10 +941,17 @@ const saveProject = async () => {
                     </div>
                   </div>
                   {getCandidatePerformanceData(selectedCandidate).length > 0 ? (
-                    <ResponsiveContainer width="100%" height={200}>
-                      <BarChart data={getCandidatePerformanceData(selectedCandidate)}>
-                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} />
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={getCandidatePerformanceData(selectedCandidate)} margin={{ top: 10, right: 10, left: 0, bottom: 80 }}>
+                        <XAxis 
+                          dataKey="name" 
+                          tick={{ fontSize: 11, fontWeight: 'bold' }}
+                          angle={-45}
+                          textAnchor="end"
+                          interval={0}
+                          height={80}
+                        />
+                        <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
                         <Tooltip 
                           content={({ active, payload }) => {
                             if (active && payload && payload.length) {
@@ -938,11 +968,11 @@ const saveProject = async () => {
                             return null;
                           }}
                         />
-                        <Bar dataKey="value" fill="#3B82F6" radius={[8, 8, 0, 0]} />
+                        <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-[200px] flex items-center justify-center text-gray-400">
+                    <div className="h-[280px] flex items-center justify-center text-gray-400">
                       <p>No performance data for selected period</p>
                     </div>
                   )}
