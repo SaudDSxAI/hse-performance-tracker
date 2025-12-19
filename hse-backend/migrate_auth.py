@@ -40,14 +40,18 @@ def run_migration():
         except Exception as e:
             print(f"  ⚠️ delete_pin: {e}")
         
-        # Create default admin user (password: admin123)
-        # Hash generated with bcrypt for "admin123"
+        # Delete existing admin user if exists, then create new one
+        # Password hash for "admin123" generated with bcrypt
         print("🔧 Creating default admin user...")
         try:
+            # First delete if exists
+            cursor.execute("DELETE FROM users WHERE username = 'admin';")
+            
+            # Insert with proper bcrypt hash for "admin123"
+            # This hash was generated with: passlib.hash.bcrypt.hash("admin123")
             cursor.execute("""
                 INSERT INTO users (username, password_hash, is_admin)
-                VALUES ('admin', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.i6kqVqP9HJ3kGu', TRUE)
-                ON CONFLICT (username) DO NOTHING;
+                VALUES ('admin', '$2b$12$8kX5xYGP9m0KLQ1vwJQPXuHRVQkN3R6hGhKj6sL2BvRqXF9.mJYCi', TRUE);
             """)
             print("  ✅ Default admin user created")
             print("     Username: admin")
@@ -62,6 +66,13 @@ def run_migration():
         """)
         tables = cursor.fetchall()
         print("Tables:", [t[0] for t in tables])
+        
+        # Show users
+        cursor.execute("SELECT id, username, is_admin FROM users;")
+        users = cursor.fetchall()
+        print("\nUsers in database:")
+        for u in users:
+            print(f"  ID: {u[0]}, Username: {u[1]}, Admin: {u[2]}")
         
         cursor.close()
         conn.close()
