@@ -1,20 +1,14 @@
 """
 Create Admin User Script
-Run this AFTER deploying the backend with auth.py
+Run this AFTER deploying the backend
 """
 
 import psycopg2
+import bcrypt
 import os
 
-# Try to import from deployed backend
-try:
-    from auth import get_password_hash
-except ImportError:
-    # Fallback - install and use passlib directly
-    from passlib.context import CryptContext
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    def get_password_hash(password):
-        return pwd_context.hash(password)
+def get_password_hash(password):
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 # Railway PostgreSQL connection string
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:ijzufiKzIPKYmzMbzewaNRzzHKBQhORc@centerbeam.proxy.rlwy.net:25154/railway")
