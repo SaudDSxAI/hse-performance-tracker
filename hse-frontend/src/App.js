@@ -1105,7 +1105,8 @@ const saveProject = async () => {
                             manpower: p.manpower,
                             manHours: p.manHours,
                             newInductions: p.newInductions,
-                            highRisk: p.highRisk || []
+                            highRisk: p.highRisk || [],
+                            deletePin: p.deletePin || ''
                           }); 
                           setModal('project'); 
                         }} className="p-2 hover:bg-emerald-50 rounded-lg">
@@ -1661,15 +1662,24 @@ const saveProject = async () => {
                 <label className="block text-sm font-medium mb-1 flex items-center gap-2">
                   <Lock size={16} />
                   Delete Protection PIN
+                  {form.id && form.deletePin && (
+                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">PIN Set</span>
+                  )}
                 </label>
-                <input 
-                  type="password" 
-                  value={form.deletePin || ''} 
-                  onChange={e => setForm({ ...form, deletePin: e.target.value })} 
-                  className="w-full border rounded-lg px-3 py-2" 
-                  placeholder="Set a PIN to protect from accidental delete (optional)"
-                />
-                <p className="text-xs text-gray-500 mt-1">Leave empty for no protection</p>
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    value={form.deletePin || ''} 
+                    onChange={e => setForm({ ...form, deletePin: e.target.value })} 
+                    className="w-full border rounded-lg px-3 py-2" 
+                    placeholder={form.id ? "Enter new PIN to change (or leave to keep current)" : "Set a PIN (optional)"}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {form.id 
+                    ? "Leave empty to remove PIN protection" 
+                    : "Leave empty for no protection"}
+                </p>
               </div>
               <button onClick={saveProject} disabled={!form.name || !form.location || !form.company || !form.hseLeadName || loading} className="w-full bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50">
                 {loading ? 'Saving...' : (form.id ? 'Update' : 'Create') + ' Project'}
