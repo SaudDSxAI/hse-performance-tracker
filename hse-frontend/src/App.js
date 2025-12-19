@@ -222,14 +222,16 @@ const saveProject = async () => {
       location: form.location,
       company: form.company,
       hseLeadName: form.hseLeadName,
-      hseLeadPhoto: form.hseLeadPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(form.hseLeadName)}&size=150&background=3B82F6&color=fff`,
+      hseLeadPhoto: form.hseLeadPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(form.hseLeadName)}&size=150&background=047857&color=fff`,
       manpower: form.manpower,
       manHours: form.manHours,
       newInductions: form.newInductions,
-      highRisk: form.highRisk || []
+      highRisk: form.highRisk || [],
+      deletePin: form.deletePin || null
     };
 
     console.log('📦 Prepared projectData:', projectData);
+    console.log('🔐 Delete PIN:', projectData.deletePin);
 
     if (form.id) {
       console.log('🔄 Updating existing project:', form.id);
