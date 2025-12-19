@@ -1,6 +1,14 @@
 from sqlalchemy import Column, Integer, String, Boolean, JSON, Date, Time, ForeignKey
 from database import Base
 
+class User(Base):
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    is_admin = Column(Boolean, default=False)
+
 class Project(Base):
     __tablename__ = "projects"
     
@@ -14,6 +22,7 @@ class Project(Base):
     man_hours = Column(Integer, default=0)
     new_inductions = Column(Integer, default=0)
     high_risk = Column(JSON, default=[])
+    delete_pin = Column(String, nullable=True)  # PIN required to delete project
 
 class Candidate(Base):
     __tablename__ = "candidates"

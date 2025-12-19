@@ -2,6 +2,31 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date, time
 
+# User/Auth Schemas
+class UserCreate(BaseModel):
+    username: str
+    password: str
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    is_admin: bool
+    
+    class Config:
+        from_attributes = True
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+class DeleteVerify(BaseModel):
+    pin: str
+
 # Project Schemas
 class ProjectBase(BaseModel):
     name: str
@@ -13,6 +38,7 @@ class ProjectBase(BaseModel):
     man_hours: int = 0
     new_inductions: int = 0
     high_risk: List[str] = []
+    delete_pin: Optional[str] = None
 
 class ProjectCreate(ProjectBase):
     pass

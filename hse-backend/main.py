@@ -4,6 +4,7 @@ from database import engine, Base
 import AddingProjects
 import AddingCandidates
 import AddingCandidatesMonitoring
+import AuthRoutes
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -25,6 +26,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include routers
+app.include_router(AuthRoutes.router)
 app.include_router(AddingProjects.router)
 app.include_router(AddingCandidates.router)
 app.include_router(AddingCandidatesMonitoring.router)
