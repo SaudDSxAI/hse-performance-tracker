@@ -2,22 +2,51 @@ const API_BASE = 'https://hse-backend.up.railway.app/api';
 
 console.log('🔧 API_BASE:', API_BASE);
 
+// Token management
+const getToken = () => localStorage.getItem('hse_token');
+const setToken = (token) => localStorage.setItem('hse_token', token);
+const removeToken = () => localStorage.removeItem('hse_token');
+const getUser = () => {
+  const user = localStorage.getItem('hse_user');
+  return user ? JSON.parse(user) : null;
+};
+const setUser = (user) => localStorage.setItem('hse_user', JSON.stringify(user));
+const removeUser = () => localStorage.removeItem('hse_user');
+
 // Helper function for fetch with error handling and logging
-const fetchAPI = async (url, options = {}) => {
+const fetchAPI = async (url, options = {}, requireAuth = true) => {
   const fullURL = url.startsWith('http') ? url : `${API_BASE}${url}`;
   
   console.log('🚀 Request:', options.method || 'GET', fullURL);
   
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+  
+  // Add auth token if required and available
+  if (requireAuth) {
+    const token = getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+  
   try {
     const response = await fetch(fullURL, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
     });
 
     console.log('✅ Response:', response.status, fullURL);
+
+    if (response.status === 401) {
+      // Token expired or invalid
+      removeToken();
+      removeUser();
+      window.location.reload();
+      throw new Error('Session expired. Please login again.');
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -30,6 +59,40 @@ const fetchAPI = async (url, options = {}) => {
     console.error('❌ Fetch error:', error.message, fullURL);
     throw error;
   }
+};
+
+// ==================== AUTHENTICATION ====================
+
+export const login = async (username, password) => {
+  const data = await fetchAPI('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  }, false);
+  
+  setToken(data.access_token);
+  setUser(data.user);
+  return data;
+};
+
+export const logout = () => {
+  removeToken();
+  removeUser();
+};
+
+export const isLoggedIn = () => {
+  return !!getToken();
+};
+
+export const getCurrentUser = () => {
+  return getUser();
+};
+
+export const verifyDeletePin = async (projectId, pin) => {
+  const data = await fetchAPI(`/auth/verify-delete-pin/${projectId}`, {
+    method: 'POST',
+    body: JSON.stringify({ pin }),
+  });
+  return data;
 };
 
 // Transform backend data (snake_case) to frontend (camelCase)
@@ -46,6 +109,7 @@ const transformProject = (project) => ({
   manHours: project.man_hours,
   newInductions: project.new_inductions,
   highRisk: project.high_risk || [],
+  deletePin: project.delete_pin,
   candidates: [],
   monthlyActivities: {
     mockDrill: false,
@@ -68,7 +132,8 @@ const transformProjectToBackend = (project) => ({
   manpower: parseInt(project.manpower) || 0,
   man_hours: parseInt(project.manHours) || 0,
   new_inductions: parseInt(project.newInductions) || 0,
-  high_risk: project.highRisk || []
+  high_risk: project.highRisk || [],
+  delete_pin: project.deletePin || null
 });
 
 const transformCandidate = (candidate, dailyLogs = [], monthlyKPIs = []) => {

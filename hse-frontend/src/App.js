@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Plus, Edit2, Trash2, X, MapPin, Users, Building2, AlertTriangle, Calendar, Shield, Flame, Anchor, HardHat, ChevronRight, User, CheckCircle, XCircle, Home, Activity, Camera, Upload, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, MapPin, Users, Building2, AlertTriangle, Calendar, Shield, Flame, Anchor, HardHat, ChevronRight, User, CheckCircle, XCircle, Home, Activity, Camera, Upload, Search, Lock, LogOut, Eye, EyeOff } from 'lucide-react';
 import * as api from './api';
 
 const riskOptions = [
@@ -31,6 +31,18 @@ const emptyDailyLog = {
 const emptyMonthlyKPIs = { observationsOpen: 0, observationsClosed: 0, violations: 0, ncrsOpen: 0, ncrsClosed: 0, weeklyReportsOpen: 0, weeklyReportsClosed: 0 };
 
 export default function App() {
+  // Auth state
+  const [isLoggedIn, setIsLoggedIn] = useState(api.isLoggedIn());
+  const [currentUser, setCurrentUser] = useState(api.getCurrentUser());
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [loginError, setLoginError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  
+  // Delete confirmation state
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'project', id: ..., name: ... }
+  const [deletePin, setDeletePin] = useState('');
+  const [deletePinError, setDeletePinError] = useState('');
+
   const [projects, setProjects] = useState([]);
   const [view, setView] = useState('home');
   const [selectedProject, setSelectedProject] = useState(null);
@@ -81,10 +93,73 @@ export default function App() {
     return index === -1 ? 998 : index;
   };
 
-  // Fetch projects on load
+  // Fetch projects on load (only if logged in)
   useEffect(() => {
-    fetchProjects();
-  }, []);
+    if (isLoggedIn) {
+      fetchProjects();
+    }
+  }, [isLoggedIn]);
+
+  // Login handler
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginError('');
+    setLoading(true);
+    
+    try {
+      const data = await api.login(loginForm.username, loginForm.password);
+      setIsLoggedIn(true);
+      setCurrentUser(data.user);
+      setLoginForm({ username: '', password: '' });
+    } catch (error) {
+      setLoginError('Invalid username or password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Logout handler
+  const handleLogout = () => {
+    api.logout();
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+    setProjects([]);
+    setView('home');
+  };
+
+  // Delete with PIN verification
+  const handleDeleteProject = async () => {
+    if (!deleteConfirm) return;
+    
+    setLoading(true);
+    setDeletePinError('');
+    
+    try {
+      // Find the project
+      const project = projects.find(p => p.id === deleteConfirm.id);
+      
+      // If project has a PIN, verify it
+      if (project?.deletePin) {
+        await api.verifyDeletePin(deleteConfirm.id, deletePin);
+      }
+      
+      // Delete the project
+      await api.deleteProject(deleteConfirm.id);
+      setProjects(projects.filter(p => p.id !== deleteConfirm.id));
+      setDeleteConfirm(null);
+      setDeletePin('');
+      alert('Project deleted successfully');
+    } catch (error) {
+      if (error.message.includes('403')) {
+        setDeletePinError('Incorrect PIN');
+      } else {
+        alert('Failed to delete project');
+        setDeleteConfirm(null);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -102,7 +177,7 @@ export default function App() {
       setProjects(projectsWithCandidates);
     } catch (error) {
       console.error('Error fetching projects:', error);
-      alert('Failed to load projects. Make sure backend is running on http://127.0.0.1:8000');
+      alert('Failed to load projects. Make sure backend is running.');
     } finally {
       setLoading(false);
     }
@@ -181,21 +256,11 @@ const saveProject = async () => {
   }
 };
 
-  const deleteProjectHandler = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this project?')) return;
-    
-    try {
-      setLoading(true);
-      await api.deleteProject(id);
-      await fetchProjects();
-      if (selectedProject?.id === id) goHome();
-      alert('Project deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting project:', error);
-      alert('Failed to delete project');
-    } finally {
-      setLoading(false);
-    }
+  const deleteProjectHandler = (id) => {
+    const project = projects.find(p => p.id === id);
+    setDeleteConfirm({ type: 'project', id, name: project?.name, hasPin: !!project?.deletePin });
+    setDeletePin('');
+    setDeletePinError('');
   };
 
   // Candidate CRUD
@@ -862,7 +927,7 @@ const saveProject = async () => {
     );
   };
 
-  if (loading && projects.length === 0) {
+  if (loading && projects.length === 0 && isLoggedIn) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -873,14 +938,92 @@ const saveProject = async () => {
     );
   }
 
+  // Login Page
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-800 to-emerald-950 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-emerald-700 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Shield className="text-white" size={32} />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800">HSE Performance Tracker</h1>
+            <p className="text-gray-500 mt-2">Sign in to continue</p>
+          </div>
+          
+          <form onSubmit={handleLogin} className="space-y-4">
+            {loginError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {loginError}
+              </div>
+            )}
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <input
+                type="text"
+                value={loginForm.username}
+                onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
+                className="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="Enter username"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={loginForm.password}
+                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                  className="w-full border rounded-lg px-4 py-3 pr-10 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  placeholder="Enter password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+            
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-emerald-700 text-white py-3 rounded-lg hover:bg-emerald-800 font-medium disabled:opacity-50"
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b p-4">
-        <div className="max-w-6xl mx-auto flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-700 rounded-lg flex items-center justify-center">
-            <Shield className="text-white" size={24} />
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-700 rounded-lg flex items-center justify-center">
+              <Shield className="text-white" size={24} />
+            </div>
+            <h1 className="text-xl font-bold text-gray-800">HSE Performance Tracker</h1>
           </div>
-          <h1 className="text-xl font-bold text-gray-800">HSE Performance Tracker</h1>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600 hidden sm:block">Hi, {currentUser?.username}</span>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-gray-600 hover:text-red-600 px-3 py-2 rounded-lg hover:bg-red-50 transition"
+            >
+              <LogOut size={18} />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -1514,6 +1657,20 @@ const saveProject = async () => {
                   ))}
                 </div>
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 flex items-center gap-2">
+                  <Lock size={16} />
+                  Delete Protection PIN
+                </label>
+                <input 
+                  type="password" 
+                  value={form.deletePin || ''} 
+                  onChange={e => setForm({ ...form, deletePin: e.target.value })} 
+                  className="w-full border rounded-lg px-3 py-2" 
+                  placeholder="Set a PIN to protect from accidental delete (optional)"
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave empty for no protection</p>
+              </div>
               <button onClick={saveProject} disabled={!form.name || !form.location || !form.company || !form.hseLeadName || loading} className="w-full bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50">
                 {loading ? 'Saving...' : (form.id ? 'Update' : 'Create') + ' Project'}
               </button>
@@ -1829,6 +1986,56 @@ const saveProject = async () => {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-sm">
+            <div className="p-5 text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 size={32} className="text-red-600" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Delete Project</h2>
+              <p className="text-gray-600 mb-4">
+                Are you sure you want to delete <strong>"{deleteConfirm.name}"</strong>?
+              </p>
+              <p className="text-sm text-red-600 mb-4">This action cannot be undone.</p>
+              
+              {deleteConfirm.hasPin && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Enter Delete PIN</label>
+                  <input
+                    type="password"
+                    value={deletePin}
+                    onChange={(e) => { setDeletePin(e.target.value); setDeletePinError(''); }}
+                    className={`w-full border rounded-lg px-4 py-2 text-center text-lg tracking-widest ${deletePinError ? 'border-red-500' : ''}`}
+                    placeholder="••••"
+                  />
+                  {deletePinError && (
+                    <p className="text-red-500 text-sm mt-1">{deletePinError}</p>
+                  )}
+                </div>
+              )}
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setDeleteConfirm(null); setDeletePin(''); setDeletePinError(''); }}
+                  className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteProject}
+                  disabled={loading || (deleteConfirm.hasPin && !deletePin)}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {loading ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
