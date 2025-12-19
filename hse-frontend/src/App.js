@@ -996,9 +996,10 @@ const saveProject = async () => {
                 <div className="flex flex-wrap gap-2 mb-4">
                   {[
                     { label: '7 Days', days: 7 },
-                    { label: 'Weekly', days: 7 },
-                    { label: 'Monthly', days: 30 },
-                    { label: 'Yearly', days: 365 }
+                    { label: '30 Days', days: 30 },
+                    { label: '3 Months', days: 90 },
+                    { label: '6 Months', days: 180 },
+                    { label: '1 Year', days: 365 }
                   ].map(({ label, days }) => {
                     const fromDate = new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
                     const toDate = new Date().toISOString().split('T')[0];
