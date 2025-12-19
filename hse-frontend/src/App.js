@@ -258,6 +258,9 @@ const saveProject = async () => {
 
   const deleteProjectHandler = (id) => {
     const project = projects.find(p => p.id === id);
+    console.log('Delete project:', project);
+    console.log('Project deletePin:', project?.deletePin);
+    console.log('Has PIN:', !!project?.deletePin);
     setDeleteConfirm({ type: 'project', id, name: project?.name, hasPin: !!project?.deletePin });
     setDeletePin('');
     setDeletePinError('');
@@ -1500,7 +1503,7 @@ const saveProject = async () => {
               
               {/* HSE Lead Photo Section */}
               <div>
-                <label className="block text-sm font-medium mb-2">HSE Lead Photo</label>
+                <label className="block text-sm font-medium mb-2">HSE Lead Photo *</label>
                 {!showHseLeadPhotoCrop ? (
                   <div className="flex items-center gap-4">
                     <div className="relative">
@@ -1509,6 +1512,11 @@ const saveProject = async () => {
                         alt="HSE Lead" 
                         className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
                       />
+                      {form.hseLeadPhoto && form.hseLeadPhoto.startsWith('data:') && (
+                        <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-1">
+                          <CheckCircle size={14} className="text-white" />
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 space-y-2">
                       <input
@@ -1532,7 +1540,7 @@ const saveProject = async () => {
                         className="w-full flex items-center justify-center gap-2 bg-emerald-700 text-white px-3 py-2 rounded-lg hover:bg-emerald-800 text-sm"
                       >
                         <Camera size={16} />
-                        Take Photo
+                        {form.hseLeadPhoto && form.hseLeadPhoto.startsWith('data:') ? 'Retake Photo' : 'Take Photo'}
                       </button>
                       <button
                         type="button"
@@ -1540,7 +1548,7 @@ const saveProject = async () => {
                         className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 text-sm"
                       >
                         <Upload size={16} />
-                        Upload
+                        {form.hseLeadPhoto && form.hseLeadPhoto.startsWith('data:') ? 'Change Photo' : 'Upload'}
                       </button>
                     </div>
                   </div>
@@ -1672,18 +1680,37 @@ const saveProject = async () => {
                     value={form.deletePin || ''} 
                     onChange={e => setForm({ ...form, deletePin: e.target.value })} 
                     className="w-full border rounded-lg px-3 py-2" 
-                    placeholder={form.id ? "Enter new PIN to change (or leave to keep current)" : "Set a PIN (optional)"}
+                    placeholder={form.id ? "Enter new PIN to change" : "Set a PIN (required)"}
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   {form.id 
-                    ? "Leave empty to remove PIN protection" 
-                    : "Leave empty for no protection"}
+                    ? "Leave empty to keep current PIN, or enter new PIN to change it" 
+                    : "Required - this PIN will be asked when deleting the project"}
                 </p>
               </div>
-              <button onClick={saveProject} disabled={!form.name || !form.location || !form.company || !form.hseLeadName || loading} className="w-full bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50">
+              <button 
+                onClick={saveProject} 
+                disabled={
+                  !form.name || 
+                  !form.location || 
+                  !form.company || 
+                  !form.hseLeadName || 
+                  (!form.id && !form.deletePin) ||
+                  (!form.id && (!form.hseLeadPhoto || !form.hseLeadPhoto.startsWith('data:'))) ||
+                  loading
+                } 
+                className="w-full bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50"
+              >
                 {loading ? 'Saving...' : (form.id ? 'Update' : 'Create') + ' Project'}
               </button>
+              {!form.id && (
+                <p className="text-xs text-center text-gray-500">
+                  {!form.hseLeadPhoto || !form.hseLeadPhoto.startsWith('data:') ? '⚠️ HSE Lead Photo required' : ''}
+                  {(!form.hseLeadPhoto || !form.hseLeadPhoto.startsWith('data:')) && !form.deletePin ? ' • ' : ''}
+                  {!form.deletePin ? '⚠️ Delete PIN required' : ''}
+                </p>
+              )}
             </div>
           </div>
         </div>
