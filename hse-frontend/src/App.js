@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Plus, Edit2, Trash2, X, MapPin, Users, Building2, AlertTriangle, Calendar, Shield, Flame, Anchor, HardHat, ChevronRight, User, CheckCircle, XCircle, Home, Activity, Camera, Upload } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Plus, Edit2, Trash2, X, MapPin, Users, Building2, AlertTriangle, Calendar, Shield, Flame, Anchor, HardHat, ChevronRight, User, CheckCircle, XCircle, Home, Activity, Camera, Upload, Search } from 'lucide-react';
 import * as api from './api';
 
 const riskOptions = [
@@ -43,6 +43,11 @@ export default function App() {
     from: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
     to: new Date().toISOString().split('T')[0]
   });
+  const [projectChartRange, setProjectChartRange] = useState({
+    from: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
+    to: new Date().toISOString().split('T')[0]
+  });
+  const [candidateSearch, setCandidateSearch] = useState('');
   const [photoCandidate, setPhotoCandidate] = useState(null); // For photo upload modal
   const [tempPhoto, setTempPhoto] = useState(null); // For cropping preview
   const [cropPosition, setCropPosition] = useState({ x: 0, y: 0, scale: 1 }); // For adjusting photo
@@ -53,6 +58,28 @@ export default function App() {
   const cameraInputRef = useRef(null);
   const hseLeadFileInputRef = useRef(null);
   const hseLeadCameraInputRef = useRef(null);
+
+  // Role hierarchy for sorting (Senior to Junior)
+  const roleHierarchy = [
+    'HSE Manager',
+    'HSE Lead',
+    'Senior HSE Officer',
+    'HSE Officer',
+    'HSE Supervisor',
+    'HSE Engineer',
+    'HSE Inspector',
+    'HSE Coordinator',
+    'Safety Officer',
+    'Safety Warden',
+    'Fire Watcher'
+  ];
+
+  const getRoleOrder = (role) => {
+    if (!role) return 999;
+    const lowerRole = role.toLowerCase();
+    const index = roleHierarchy.findIndex(r => lowerRole.includes(r.toLowerCase()));
+    return index === -1 ? 998 : index;
+  };
 
   // Fetch projects on load
   useEffect(() => {
@@ -560,6 +587,73 @@ const saveProject = async () => {
     return Math.round((totalYes / totalAnswered) * 100);
   };
 
+  // Calculate candidate performance for a specific date range
+  const getCandidatePerformanceForRange = (candidate, fromDate, toDate) => {
+    if (!candidate.dailyLogs) return 0;
+    
+    const logs = candidate.dailyLogs;
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    
+    const taskKeys = [
+      'inductionsCovered', 'barcodeImplemented', 'attendanceVerified', 'taskBriefing',
+      'tbtConducted', 'violationBriefing', 'safetyObservationsRecorded', 'sorNcrClosed',
+      'mockDrillParticipated', 'campaignParticipated', 'monthlyInspectionsCompleted',
+      'nearMissReported', 'weeklyTrainingBriefed'
+    ];
+    
+    let totalYes = 0;
+    let totalAnswered = 0;
+    
+    Object.entries(logs).forEach(([date, log]) => {
+      const logDate = new Date(date);
+      if (logDate >= from && logDate <= to) {
+        taskKeys.forEach(key => {
+          if (log[key] !== null && log[key] !== undefined) {
+            totalAnswered++;
+            if (log[key] === true) totalYes++;
+          }
+        });
+      }
+    });
+    
+    if (totalAnswered === 0) return null;
+    return Math.round((totalYes / totalAnswered) * 100);
+  };
+
+  // Calculate project-wide performance stats
+  const getProjectPerformanceStats = (candidates) => {
+    if (!candidates || candidates.length === 0) return { average: 0, distribution: [], candidateScores: [] };
+    
+    const candidateScores = candidates.map(c => {
+      const score = getCandidatePerformanceForRange(c, projectChartRange.from, projectChartRange.to);
+      return {
+        name: c.name,
+        score: score,
+        role: c.role
+      };
+    }).filter(c => c.score !== null);
+    
+    if (candidateScores.length === 0) return { average: 0, distribution: [], candidateScores: [] };
+    
+    const average = Math.round(candidateScores.reduce((sum, c) => sum + c.score, 0) / candidateScores.length);
+    
+    // Calculate distribution
+    const excellent = candidateScores.filter(c => c.score >= 80).length;
+    const good = candidateScores.filter(c => c.score >= 60 && c.score < 80).length;
+    const fair = candidateScores.filter(c => c.score >= 40 && c.score < 60).length;
+    const needsWork = candidateScores.filter(c => c.score < 40).length;
+    
+    const distribution = [
+      { name: 'Excellent', value: excellent, color: '#22C55E' },
+      { name: 'Good', value: good, color: '#EAB308' },
+      { name: 'Fair', value: fair, color: '#F97316' },
+      { name: 'Needs Work', value: needsWork, color: '#EF4444' }
+    ].filter(d => d.value > 0);
+    
+    return { average, distribution, candidateScores };
+  };
+
   // Speedometer Component
   const PerformanceGauge = ({ percentage }) => {
     const getColor = () => {
@@ -891,12 +985,173 @@ const saveProject = async () => {
           <div className="space-y-6">
             <Breadcrumb />
 
+            {/* Project Performance Overview */}
+            {selectedProject.candidates && selectedProject.candidates.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm border p-5">
+                <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                  <Activity size={20} />Project Performance Overview
+                </h2>
+                
+                {/* Time Filter Buttons */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {[
+                    { label: '7 Days', days: 7 },
+                    { label: 'Weekly', days: 7 },
+                    { label: 'Monthly', days: 30 },
+                    { label: 'Yearly', days: 365 }
+                  ].map(({ label, days }) => {
+                    const fromDate = new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
+                    const toDate = new Date().toISOString().split('T')[0];
+                    const isActive = projectChartRange.from === fromDate && projectChartRange.to === toDate;
+                    return (
+                      <button
+                        key={label}
+                        onClick={() => setProjectChartRange({ from: fromDate, to: toDate })}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                          isActive 
+                            ? 'bg-emerald-700 text-white' 
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex flex-wrap gap-2 mb-6 items-center">
+                  <span className="text-sm text-gray-600">Custom:</span>
+                  <input 
+                    type="date" 
+                    value={projectChartRange.from} 
+                    onChange={(e) => setProjectChartRange({ ...projectChartRange, from: e.target.value })} 
+                    className="border rounded px-2 py-1 text-sm"
+                  />
+                  <span className="text-gray-500">to</span>
+                  <input 
+                    type="date" 
+                    value={projectChartRange.to} 
+                    onChange={(e) => setProjectChartRange({ ...projectChartRange, to: e.target.value })} 
+                    className="border rounded px-2 py-1 text-sm"
+                  />
+                </div>
+
+                {/* Gauge + Donut Charts */}
+                {(() => {
+                  const stats = getProjectPerformanceStats(selectedProject.candidates);
+                  if (stats.candidateScores.length === 0) {
+                    return (
+                      <div className="text-center text-gray-400 py-8">
+                        No performance data for selected period
+                      </div>
+                    );
+                  }
+                  
+                  const getColor = (pct) => {
+                    if (pct >= 80) return '#22C55E';
+                    if (pct >= 60) return '#EAB308';
+                    if (pct >= 40) return '#F97316';
+                    return '#EF4444';
+                  };
+                  
+                  const getLabel = (pct) => {
+                    if (pct >= 80) return 'Excellent';
+                    if (pct >= 60) return 'Good';
+                    if (pct >= 40) return 'Fair';
+                    return 'Needs Work';
+                  };
+
+                  return (
+                    <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
+                      {/* Big Gauge */}
+                      <div className="flex flex-col items-center">
+                        <div className="relative w-40 h-20">
+                          <svg className="w-40 h-20" viewBox="0 0 100 50">
+                            <path d="M 5 45 A 40 40 0 0 1 25 10" fill="none" stroke="#EF4444" strokeWidth="8" opacity="0.3" />
+                            <path d="M 25 10 A 40 40 0 0 1 40 5" fill="none" stroke="#F97316" strokeWidth="8" opacity="0.3" />
+                            <path d="M 40 5 A 40 40 0 0 1 60 5" fill="none" stroke="#EAB308" strokeWidth="8" opacity="0.3" />
+                            <path d="M 60 5 A 40 40 0 0 1 95 45" fill="none" stroke="#22C55E" strokeWidth="8" opacity="0.3" />
+                            <line x1="50" y1="45" x2="50" y2="12" stroke={getColor(stats.average)} strokeWidth="3" strokeLinecap="round"
+                              style={{ transformOrigin: '50px 45px', transform: `rotate(${-90 + (stats.average * 1.8)}deg)`, transition: 'transform 0.5s ease' }} />
+                            <circle cx="50" cy="45" r="5" fill={getColor(stats.average)} />
+                          </svg>
+                        </div>
+                        <div className="text-center mt-2">
+                          <p className="text-3xl font-bold" style={{ color: getColor(stats.average) }}>{stats.average}%</p>
+                          <p className="text-sm text-gray-500">{getLabel(stats.average)}</p>
+                          <p className="text-xs text-gray-400 mt-1">Project Average</p>
+                        </div>
+                      </div>
+
+                      {/* Donut Chart */}
+                      {stats.distribution.length > 0 && (
+                        <div className="flex flex-col items-center">
+                          <ResponsiveContainer width={180} height={180}>
+                            <PieChart>
+                              <Pie
+                                data={stats.distribution}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={50}
+                                outerRadius={80}
+                                dataKey="value"
+                                paddingAngle={2}
+                              >
+                                {stats.distribution.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip 
+                                content={({ active, payload }) => {
+                                  if (active && payload && payload.length) {
+                                    const data = payload[0].payload;
+                                    return (
+                                      <div className="bg-white p-2 border rounded shadow-sm">
+                                        <p className="text-sm font-medium">{data.name}</p>
+                                        <p className="text-sm">{data.value} candidate{data.value !== 1 ? 's' : ''}</p>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                }}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="flex flex-wrap justify-center gap-3 mt-2">
+                            {stats.distribution.map((d, i) => (
+                              <div key={i} className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }}></div>
+                                <span className="text-xs text-gray-600">{d.name}: {d.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Candidates List */}
             <div className="bg-white rounded-xl shadow-sm border">
-              <div className="p-4 border-b flex justify-between items-center">
+              <div className="p-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <h2 className="font-semibold text-lg flex items-center gap-2"><Users size={20} />Candidates</h2>
-                <button onClick={() => { setForm({}); setModal('candidate'); }} className="flex items-center gap-2 bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 text-sm">
-                  <Plus size={16} />Add Candidate
-                </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  {/* Search Box */}
+                  <div className="relative flex-1 sm:flex-initial">
+                    <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search candidates..."
+                      value={candidateSearch}
+                      onChange={(e) => setCandidateSearch(e.target.value)}
+                      className="pl-9 pr-3 py-2 border rounded-lg text-sm w-full sm:w-48"
+                    />
+                  </div>
+                  <button onClick={() => { setForm({}); setModal('candidate'); }} className="flex items-center gap-2 bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 text-sm whitespace-nowrap">
+                    <Plus size={16} />Add
+                  </button>
+                </div>
               </div>
               {!selectedProject.candidates || selectedProject.candidates.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
@@ -908,7 +1163,10 @@ const saveProject = async () => {
                 </div>
               ) : (
                 <div className="divide-y">
-                  {selectedProject.candidates.map(c => {
+                  {selectedProject.candidates
+                    .filter(c => c.name.toLowerCase().includes(candidateSearch.toLowerCase()))
+                    .sort((a, b) => getRoleOrder(a.role) - getRoleOrder(b.role))
+                    .map(c => {
                     const performancePercentage = getOverallPerformance(c);
                     return (
                       <div key={c.id} className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => goToCandidate(c)}>
@@ -947,6 +1205,11 @@ const saveProject = async () => {
                       </div>
                     );
                   })}
+                  {selectedProject.candidates.filter(c => c.name.toLowerCase().includes(candidateSearch.toLowerCase())).length === 0 && (
+                    <div className="p-8 text-center text-gray-400">
+                      No candidates found matching "{candidateSearch}"
+                    </div>
+                  )}
                 </div>
               )}
             </div>
