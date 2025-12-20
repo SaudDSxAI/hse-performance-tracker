@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Plus, Edit2, Trash2, X, MapPin, Users, Building2, AlertTriangle, Calendar, Shield, Flame, Anchor, HardHat, ChevronRight, User, CheckCircle, XCircle, Home, Activity, Camera, Upload, Search, Lock, LogOut, Eye, EyeOff, GripVertical } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, MapPin, Users, Building2, AlertTriangle, Calendar, Shield, Flame, Anchor, HardHat, ChevronRight, User, CheckCircle, XCircle, Home, Activity, Camera, Upload, Search, Lock, LogOut, Eye, EyeOff, ArrowUp, ArrowDown } from 'lucide-react';
 import * as api from './api';
 
 const riskOptions = [
@@ -66,7 +66,6 @@ export default function App() {
   const [hseLeadTempPhoto, setHseLeadTempPhoto] = useState(null); // For HSE Lead photo cropping
   const [hseLeadCropPosition, setHseLeadCropPosition] = useState({ x: 0, y: 0, scale: 1 });
   const [showHseLeadPhotoCrop, setShowHseLeadPhotoCrop] = useState(false);
-  const [draggedCandidate, setDraggedCandidate] = useState(null); // For drag & drop reordering
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const hseLeadFileInputRef = useRef(null);
@@ -247,53 +246,39 @@ const saveProject = async () => {
     setDeletePinError('');
   };
 
-  // Drag and Drop handlers for candidate reordering
-  const handleDragStart = (e, candidate) => {
-    setDraggedCandidate(candidate);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDrop = async (e, targetCandidate) => {
-    e.preventDefault();
-    if (!draggedCandidate || draggedCandidate.id === targetCandidate.id) {
-      setDraggedCandidate(null);
-      return;
-    }
-
-    // Get current candidates and reorder
-    const candidates = [...selectedProject.candidates];
-    const draggedIndex = candidates.findIndex(c => c.id === draggedCandidate.id);
-    const targetIndex = candidates.findIndex(c => c.id === targetCandidate.id);
-
-    // Remove dragged item and insert at new position
-    const [removed] = candidates.splice(draggedIndex, 1);
-    candidates.splice(targetIndex, 0, removed);
-
-    // Update local state immediately for smooth UX
+  // Move candidate up/down handlers
+  const moveCandidate = async (candidateId, direction) => {
+    const candidates = [...selectedProject.candidates].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    const currentIndex = candidates.findIndex(c => c.id === candidateId);
+    
+    if (direction === 'up' && currentIndex === 0) return;
+    if (direction === 'down' && currentIndex === candidates.length - 1) return;
+    
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    
+    // Swap positions
+    const temp = candidates[currentIndex];
+    candidates[currentIndex] = candidates[newIndex];
+    candidates[newIndex] = temp;
+    
+    // Update displayOrder
+    candidates.forEach((c, index) => {
+      c.displayOrder = index;
+    });
+    
+    // Update local state
     const updatedProject = { ...selectedProject, candidates };
     setSelectedProject(updatedProject);
     setProjects(projects.map(p => p.id === selectedProject.id ? updatedProject : p));
-
-    // Save new order to backend
+    
+    // Save to backend
     try {
       const candidateIds = candidates.map(c => c.id);
       await api.reorderCandidates(selectedProject.id, candidateIds);
     } catch (error) {
       console.error('Failed to save order:', error);
-      // Refresh to get correct order if save failed
       await fetchProjects();
     }
-
-    setDraggedCandidate(null);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedCandidate(null);
   };
 
   // Candidate CRUD
@@ -1344,26 +1329,33 @@ const saveProject = async () => {
                   {selectedProject.candidates
                     .filter(c => c.name.toLowerCase().includes(candidateSearch.toLowerCase()))
                     .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
-                    .map(c => {
+                    .map((c, index, arr) => {
                     const performancePercentage = getOverallPerformance(c);
+                    const isFirst = index === 0;
+                    const isLast = index === arr.length - 1;
                     return (
                       <div 
                         key={c.id} 
-                        className={`p-4 hover:bg-gray-50 cursor-pointer transition-all ${draggedCandidate?.id === c.id ? 'opacity-50 bg-emerald-50' : ''}`}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, c)}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, c)}
-                        onDragEnd={handleDragEnd}
+                        className="p-4 hover:bg-gray-50 cursor-pointer"
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex gap-3 min-w-0 items-center">
-                            {/* Drag Handle */}
-                            <div 
-                              className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 flex-shrink-0"
-                              onMouseDown={(e) => e.stopPropagation()}
-                            >
-                              <GripVertical size={20} />
+                            {/* Up/Down Arrows */}
+                            <div className="flex flex-col gap-0.5 flex-shrink-0">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); moveCandidate(c.id, 'up'); }}
+                                disabled={isFirst}
+                                className={`p-1 rounded ${isFirst ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
+                              >
+                                <ArrowUp size={16} />
+                              </button>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); moveCandidate(c.id, 'down'); }}
+                                disabled={isLast}
+                                className={`p-1 rounded ${isLast ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
+                              >
+                                <ArrowDown size={16} />
+                              </button>
                             </div>
                             <div 
                               className="relative group flex-shrink-0 cursor-pointer"
