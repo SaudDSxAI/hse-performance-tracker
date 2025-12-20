@@ -186,6 +186,7 @@ const transformCandidate = (candidate, dailyLogs = [], monthlyKPIs = []) => {
     name: candidate.name,
     photo: candidate.photo,
     role: candidate.role,
+    displayOrder: candidate.display_order || 0,
     dailyLogs: logsObject,
     monthlyKPIs: kpis
   };
@@ -195,7 +196,8 @@ const transformCandidateToBackend = (candidate, projectId) => ({
   project_id: projectId,
   name: candidate.name,
   photo: candidate.photo,
-  role: candidate.role || ''
+  role: candidate.role || '',
+  display_order: candidate.displayOrder || 0
 });
 
 // ==================== PROJECTS ====================
@@ -339,5 +341,15 @@ export const createMonthlyKPI = async (candidateId, month, kpis) => {
 
 export const getMonthlyKPIsByCandidate = async (candidateId) => {
   const data = await fetchAPI(`/candidates/${candidateId}/monthly-kpis`);
+  return data;
+};
+
+// ==================== CANDIDATE REORDER ====================
+
+export const reorderCandidates = async (projectId, candidateIds) => {
+  const data = await fetchAPI(`/candidates/project/${projectId}/reorder`, {
+    method: 'PUT',
+    body: JSON.stringify({ candidate_ids: candidateIds }),
+  });
   return data;
 };
