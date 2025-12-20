@@ -101,6 +101,10 @@ class DailyLogBase(BaseModel):
     monthly_inspections_completed: Optional[bool] = None
     near_miss_reported: Optional[bool] = None
     weekly_training_briefed: Optional[bool] = None
+    
+    # Comment and description
+    comment: Optional[str] = None
+    description: Optional[str] = None
 
 class DailyLogCreate(DailyLogBase):
     candidate_id: int

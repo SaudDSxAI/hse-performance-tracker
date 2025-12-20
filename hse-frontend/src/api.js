@@ -157,7 +157,10 @@ const transformCandidate = (candidate, dailyLogs = [], monthlyKPIs = []) => {
       campaignParticipated: log.campaign_participated,
       monthlyInspectionsCompleted: log.monthly_inspections_completed,
       nearMissReported: log.near_miss_reported,
-      weeklyTrainingBriefed: log.weekly_training_briefed
+      weeklyTrainingBriefed: log.weekly_training_briefed,
+      // Comment and description
+      comment: log.comment,
+      description: log.description
     };
   });
 
@@ -308,7 +311,10 @@ export const createDailyLog = async (candidateId, date, log) => {
       campaign_participated: log.campaignParticipated,
       monthly_inspections_completed: log.monthlyInspectionsCompleted,
       near_miss_reported: log.nearMissReported,
-      weekly_training_briefed: log.weeklyTrainingBriefed
+      weekly_training_briefed: log.weeklyTrainingBriefed,
+      // Comment and description
+      comment: log.comment || null,
+      description: log.description || null
     }),
   });
   return data;

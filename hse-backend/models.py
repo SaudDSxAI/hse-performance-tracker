@@ -60,6 +60,10 @@ class DailyLog(Base):
     monthly_inspections_completed = Column(Boolean, nullable=True)# Monthly inspections 100% completed?
     near_miss_reported = Column(Boolean, nullable=True)           # Near miss reported this month?
     weekly_training_briefed = Column(Boolean, nullable=True)      # Weekly training briefed to workers?
+    
+    # Comment and description
+    comment = Column(String(255), nullable=True)
+    description = Column(String, nullable=True)
 
 class MonthlyKPI(Base):
     __tablename__ = "monthly_kpis"

@@ -26,7 +26,9 @@ const emptyDailyLog = {
   campaignParticipated: null,
   monthlyInspectionsCompleted: null,
   nearMissReported: null,
-  weeklyTrainingBriefed: null
+  weeklyTrainingBriefed: null,
+  comment: '',
+  description: ''
 };
 const emptyMonthlyKPIs = { observationsOpen: 0, observationsClosed: 0, violations: 0, ncrsOpen: 0, ncrsClosed: 0, weeklyReportsOpen: 0, weeklyReportsClosed: 0 };
 
@@ -1328,7 +1330,14 @@ const saveProject = async () => {
                 <div className="divide-y">
                   {selectedProject.candidates
                     .filter(c => c.name.toLowerCase().includes(candidateSearch.toLowerCase()))
-                    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                    .sort((a, b) => {
+                      // First sort by performance (high to low)
+                      const perfA = getOverallPerformance(a) || 0;
+                      const perfB = getOverallPerformance(b) || 0;
+                      if (perfB !== perfA) return perfB - perfA;
+                      // Then by displayOrder
+                      return (a.displayOrder || 0) - (b.displayOrder || 0);
+                    })
                     .map((c, index, arr) => {
                     const performancePercentage = getOverallPerformance(c);
                     const isFirst = index === 0;
@@ -1855,6 +1864,30 @@ const saveProject = async () => {
                   </div>
                 </div>
               ))}
+              
+              {/* Comment and Description */}
+              <div className="p-3 border rounded-lg bg-gray-50">
+                <label className="block text-sm font-medium mb-2">Comment (optional)</label>
+                <input 
+                  type="text" 
+                  value={form.comment || ''} 
+                  onChange={e => setForm({ ...form, comment: e.target.value })} 
+                  className="w-full border rounded-lg px-3 py-2 text-sm" 
+                  placeholder="Short comment..."
+                  maxLength={255}
+                />
+              </div>
+              
+              <div className="p-3 border rounded-lg bg-gray-50">
+                <label className="block text-sm font-medium mb-2">Description (optional)</label>
+                <textarea 
+                  value={form.description || ''} 
+                  onChange={e => setForm({ ...form, description: e.target.value })} 
+                  className="w-full border rounded-lg px-3 py-2 text-sm" 
+                  placeholder="Detailed notes..."
+                  rows={3}
+                />
+              </div>
               
               <button onClick={saveDailyLog} disabled={loading} className="w-full bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50 sticky bottom-0">
                 {loading ? 'Saving...' : 'Save Log'}
