@@ -1337,11 +1337,12 @@ const saveProject = async () => {
                       <div 
                         key={c.id} 
                         className="p-4 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => goToCandidate(c)}
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex gap-3 min-w-0 items-center">
                             {/* Up/Down Arrows */}
-                            <div className="flex flex-col gap-0.5 flex-shrink-0">
+                            <div className="flex flex-col gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               <button 
                                 onClick={(e) => { e.stopPropagation(); moveCandidate(c.id, 'up'); }}
                                 disabled={isFirst}
@@ -1366,7 +1367,7 @@ const saveProject = async () => {
                                 <Camera size={20} className="text-white" />
                               </div>
                             </div>
-                            <div className="min-w-0" onClick={() => goToCandidate(c)}>
+                            <div className="min-w-0">
                               <p className="font-medium text-gray-900 text-lg">{c.name}</p>
                               {c.role && <p className="text-sm text-gray-500">{c.role}</p>}
                             </div>
@@ -1380,10 +1381,10 @@ const saveProject = async () => {
                                 No data
                               </div>
                             )}
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                               <button onClick={(e) => { e.stopPropagation(); setForm(c); setModal('candidate'); }} className="p-2 hover:bg-emerald-50 rounded-lg"><Edit2 size={16} /></button>
                               <button onClick={(e) => { e.stopPropagation(); deleteCandidateHandler(c.id); }} className="p-2 hover:bg-red-50 rounded-lg text-red-500"><Trash2 size={16} /></button>
-                              <ChevronRight size={20} className="text-gray-400" onClick={() => goToCandidate(c)} />
+                              <ChevronRight size={20} className="text-gray-400" />
                             </div>
                           </div>
                         </div>
