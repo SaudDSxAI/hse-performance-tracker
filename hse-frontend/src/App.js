@@ -72,28 +72,6 @@ export default function App() {
   const hseLeadFileInputRef = useRef(null);
   const hseLeadCameraInputRef = useRef(null);
 
-  // Role hierarchy for sorting (Senior to Junior)
-  const roleHierarchy = [
-    'HSE Manager',
-    'HSE Lead',
-    'Senior HSE Officer',
-    'HSE Officer',
-    'HSE Supervisor',
-    'HSE Engineer',
-    'HSE Inspector',
-    'HSE Coordinator',
-    'Safety Officer',
-    'Safety Warden',
-    'Fire Watcher'
-  ];
-
-  const getRoleOrder = (role) => {
-    if (!role) return 999;
-    const lowerRole = role.toLowerCase();
-    const index = roleHierarchy.findIndex(r => lowerRole.includes(r.toLowerCase()));
-    return index === -1 ? 998 : index;
-  };
-
   // Fetch projects on load (only if logged in)
   useEffect(() => {
     if (isLoggedIn) {
