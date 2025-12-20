@@ -31,10 +31,11 @@ def create_candidate(candidate: CandidateCreate, db: Session = Depends(get_db)):
         Candidate.project_id == candidate.project_id
     ).count()
     
-    db_candidate = Candidate(
-        **candidate.model_dump(),
-        display_order=max_order  # Add at the end
-    )
+    # Create candidate data without display_order from input
+    candidate_data = candidate.model_dump()
+    candidate_data['display_order'] = max_order  # Override with calculated order
+    
+    db_candidate = Candidate(**candidate_data)
     db.add(db_candidate)
     db.commit()
     db.refresh(db_candidate)
