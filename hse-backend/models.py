@@ -32,6 +32,7 @@ class Candidate(Base):
     name = Column(String, nullable=False)
     photo = Column(String)
     role = Column(String)
+    display_order = Column(Integer, default=0)
 
 class DailyLog(Base):
     __tablename__ = "daily_logs"

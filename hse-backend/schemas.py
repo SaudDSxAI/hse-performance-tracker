@@ -57,6 +57,7 @@ class CandidateBase(BaseModel):
     name: str
     photo: Optional[str] = None
     role: Optional[str] = None
+    display_order: int = 0
 
 class CandidateCreate(CandidateBase):
     project_id: int
@@ -65,6 +66,7 @@ class CandidateUpdate(BaseModel):
     name: Optional[str] = None
     photo: Optional[str] = None
     role: Optional[str] = None
+    display_order: Optional[int] = None
 
 class CandidateResponse(CandidateBase):
     id: int
@@ -72,6 +74,9 @@ class CandidateResponse(CandidateBase):
     
     class Config:
         from_attributes = True
+
+class CandidateReorder(BaseModel):
+    candidate_ids: List[int]  # List of candidate IDs in new order
 
 # Daily Log Schemas
 class DailyLogBase(BaseModel):
