@@ -75,12 +75,12 @@ export default function App() {
   const [candidateSearch, setCandidateSearch] = useState('');
   
   // Sections state
-  const [projectTab, setProjectTab] = useState('candidates'); // 'candidates' or 'sections'
+  const [projectTab, setProjectTab] = useState('candidates');
   const [sections, setSections] = useState([]);
   const [hiddenSections, setHiddenSections] = useState(new Set());
   const [selectedSection, setSelectedSection] = useState(null);
   const [sectionForm, setSectionForm] = useState({});
-  const [sectionModal, setSectionModal] = useState(null); // 'add', 'edit', 'assign'
+  const [sectionModal, setSectionModal] = useState(null);
   
   const [photoCandidate, setPhotoCandidate] = useState(null); // For photo upload modal
   const [tempPhoto, setTempPhoto] = useState(null); // For cropping preview
@@ -1694,11 +1694,9 @@ const saveProject = async () => {
                       {selectedProject.candidates
                         .filter(c => c.name.toLowerCase().includes(candidateSearch.toLowerCase()))
                         .sort((a, b) => {
-                          // First sort by performance (high to low)
                           const perfA = getOverallPerformance(a) || 0;
                           const perfB = getOverallPerformance(b) || 0;
                           if (perfB !== perfA) return perfB - perfA;
-                          // Then by displayOrder
                           return (a.displayOrder || 0) - (b.displayOrder || 0);
                         })
                         .map((c, index, arr) => {
@@ -1711,7 +1709,6 @@ const saveProject = async () => {
                             className="border rounded-lg p-4 hover:bg-gray-50 hover:shadow-md transition cursor-pointer"
                             onClick={() => goToCandidate(c)}
                           >
-                            {/* Up/Down Arrows - Top Right */}
                             <div className="flex justify-between items-start mb-3">
                               <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                                 <button 
@@ -1734,8 +1731,6 @@ const saveProject = async () => {
                                 <button onClick={(e) => { e.stopPropagation(); deleteCandidateHandler(c.id); }} className="p-1 hover:bg-red-50 rounded-lg text-red-500"><Trash2 size={14} /></button>
                               </div>
                             </div>
-
-                            {/* Photo - Centered */}
                             <div className="flex justify-center mb-3">
                               <div 
                                 className="relative group cursor-pointer"
@@ -1747,14 +1742,10 @@ const saveProject = async () => {
                                 </div>
                               </div>
                             </div>
-
-                            {/* Name & Role - Centered */}
                             <div className="text-center mb-3">
                               <p className="font-semibold text-gray-900 text-base truncate">{c.name}</p>
                               {c.role && <p className="text-xs text-gray-500 truncate">{c.role}</p>}
                             </div>
-
-                            {/* Performance Gauge - Centered */}
                             <div className="flex justify-center">
                               {Object.keys(c.dailyLogs || {}).length > 0 ? (
                                 <PerformanceGauge percentage={performancePercentage} />
@@ -1778,7 +1769,6 @@ const saveProject = async () => {
               {/* Sections Tab Content */}
               {projectTab === 'sections' && (
                 <div className="p-6">
-                  {/* Header */}
                   <div className="flex justify-between items-center mb-6">
                     <div>
                       <h2 className="text-2xl font-bold text-gray-900">Sections</h2>
@@ -1792,8 +1782,6 @@ const saveProject = async () => {
                       Add Section
                     </button>
                   </div>
-
-                  {/* Sections List */}
                   {sections.length === 0 ? (
                     <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                       <Layers size={48} className="mx-auto mb-4 text-gray-300" />
@@ -1811,70 +1799,38 @@ const saveProject = async () => {
                       {sections.map(section => {
                         const isHidden = hiddenSections.has(section.id);
                         const sectionCandidates = getSectionCandidates(section.id);
-                        
                         return (
                           <div key={section.id} className="border rounded-lg bg-white shadow-sm">
-                            {/* Section Header */}
                             <div className="flex items-center justify-between p-4 bg-gray-50 border-b">
                               <div className="flex items-center gap-3 flex-1">
-                                <button
-                                  onClick={() => toggleSectionVisibility(section.id)}
-                                  className="p-1 hover:bg-gray-200 rounded"
-                                >
+                                <button onClick={() => toggleSectionVisibility(section.id)} className="p-1 hover:bg-gray-200 rounded">
                                   {isHidden ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
                                 </button>
                                 <div className="flex-1">
                                   <h3 className="font-semibold text-gray-900">{section.name}</h3>
-                                  {section.description && (
-                                    <p className="text-sm text-gray-500">{section.description}</p>
-                                  )}
-                                  <p className="text-xs text-gray-400 mt-1">
-                                    {sectionCandidates.length} candidate{sectionCandidates.length !== 1 ? 's' : ''}
-                                  </p>
+                                  {section.description && <p className="text-sm text-gray-500">{section.description}</p>}
+                                  <p className="text-xs text-gray-400 mt-1">{sectionCandidates.length} candidate{sectionCandidates.length !== 1 ? 's' : ''}</p>
                                 </div>
                               </div>
-                              
                               <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => toggleSectionVisibility(section.id)}
-                                  className="p-2 hover:bg-gray-200 rounded-lg text-gray-600"
-                                  title={isHidden ? 'Show section' : 'Hide section'}
-                                >
+                                <button onClick={() => toggleSectionVisibility(section.id)} className="p-2 hover:bg-gray-200 rounded-lg text-gray-600" title={isHidden ? 'Show section' : 'Hide section'}>
                                   {isHidden ? <Eye size={18} /> : <EyeOff size={18} />}
                                 </button>
-                                <button
-                                  onClick={() => {
-                                    setSectionForm({ name: section.name, description: section.description });
-                                    setSelectedSection(section);
-                                    setSectionModal('edit');
-                                  }}
-                                  className="p-2 hover:bg-emerald-50 rounded-lg text-emerald-600"
-                                >
+                                <button onClick={() => { setSectionForm({ name: section.name, description: section.description }); setSelectedSection(section); setSectionModal('edit'); }} className="p-2 hover:bg-emerald-50 rounded-lg text-emerald-600">
                                   <Edit2 size={18} />
                                 </button>
-                                <button
-                                  onClick={() => handleDeleteSection(section.id)}
-                                  className="p-2 hover:bg-red-50 rounded-lg text-red-600"
-                                >
+                                <button onClick={() => handleDeleteSection(section.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-600">
                                   <Trash2 size={18} />
                                 </button>
                               </div>
                             </div>
-
-                            {/* Section Content (Collapsible) */}
                             {!isHidden && (
                               <div className="p-4">
                                 {sectionCandidates.length === 0 ? (
                                   <div className="text-center py-8 text-gray-400">
                                     <Users size={32} className="mx-auto mb-2 text-gray-300" />
                                     <p className="text-sm">No candidates in this section</p>
-                                    <button
-                                      onClick={() => {
-                                        setSelectedSection(section);
-                                        setSectionModal('assign');
-                                      }}
-                                      className="mt-3 text-sm text-emerald-600 hover:text-emerald-700 font-medium"
-                                    >
+                                    <button onClick={() => { setSelectedSection(section); setSectionModal('assign'); }} className="mt-3 text-sm text-emerald-600 hover:text-emerald-700 font-medium">
                                       + Assign Candidates
                                     </button>
                                   </div>
@@ -1882,38 +1838,19 @@ const saveProject = async () => {
                                   <>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
                                       {sectionCandidates.map(candidate => (
-                                        <div
-                                          key={candidate.id}
-                                          className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50"
-                                        >
-                                          <img
-                                            src={candidate.photo}
-                                            alt={candidate.name}
-                                            className="w-10 h-10 rounded-full object-cover"
-                                          />
+                                        <div key={candidate.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                                          <img src={candidate.photo} alt={candidate.name} className="w-10 h-10 rounded-full object-cover" />
                                           <div className="flex-1 min-w-0">
                                             <p className="font-medium text-sm truncate">{candidate.name}</p>
-                                            {candidate.role && (
-                                              <p className="text-xs text-gray-500 truncate">{candidate.role}</p>
-                                            )}
+                                            {candidate.role && <p className="text-xs text-gray-500 truncate">{candidate.role}</p>}
                                           </div>
-                                          <button
-                                            onClick={() => handleUnassignCandidate(section.id, candidate.id)}
-                                            className="p-1 hover:bg-red-50 rounded text-red-500"
-                                            title="Remove from section"
-                                          >
+                                          <button onClick={() => handleUnassignCandidate(section.id, candidate.id)} className="p-1 hover:bg-red-50 rounded text-red-500" title="Remove from section">
                                             <X size={16} />
                                           </button>
                                         </div>
                                       ))}
                                     </div>
-                                    <button
-                                      onClick={() => {
-                                        setSelectedSection(section);
-                                        setSectionModal('assign');
-                                      }}
-                                      className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
-                                    >
+                                    <button onClick={() => { setSelectedSection(section); setSectionModal('assign'); }} className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
                                       + Assign More Candidates
                                     </button>
                                   </>
@@ -2699,7 +2636,6 @@ const saveProject = async () => {
                 <X size={20} />
               </button>
             </div>
-            
             <form onSubmit={sectionModal === 'add' ? handleAddSection : handleEditSection}>
               <div className="space-y-4">
                 <div>
@@ -2713,7 +2649,6 @@ const saveProject = async () => {
                     required
                   />
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium mb-1">Description</label>
                   <textarea
@@ -2725,7 +2660,6 @@ const saveProject = async () => {
                   />
                 </div>
               </div>
-              
               <div className="flex gap-2 mt-6">
                 <button
                   type="button"
@@ -2760,7 +2694,6 @@ const saveProject = async () => {
                 <X size={20} />
               </button>
             </div>
-            
             <div className="space-y-2">
               {getUnassignedCandidates(selectedSection.id).length === 0 ? (
                 <p className="text-center text-gray-500 py-8">
@@ -2768,15 +2701,8 @@ const saveProject = async () => {
                 </p>
               ) : (
                 getUnassignedCandidates(selectedSection.id).map(candidate => (
-                  <div
-                    key={candidate.id}
-                    className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50"
-                  >
-                    <img
-                      src={candidate.photo}
-                      alt={candidate.name}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
+                  <div key={candidate.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                    <img src={candidate.photo} alt={candidate.name} className="w-12 h-12 rounded-full object-cover" />
                     <div className="flex-1">
                       <p className="font-medium">{candidate.name}</p>
                       {candidate.role && <p className="text-sm text-gray-500">{candidate.role}</p>}
@@ -2792,7 +2718,6 @@ const saveProject = async () => {
                 ))
               )}
             </div>
-            
             <div className="mt-6">
               <button
                 onClick={() => { setSectionModal(null); setSelectedSection(null); }}
@@ -2804,6 +2729,7 @@ const saveProject = async () => {
           </div>
         </div>
       )}
+
     </div>
   );
 }
