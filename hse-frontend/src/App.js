@@ -1515,7 +1515,7 @@ const saveProject = async () => {
                   </button>
                 </div>
               ) : (
-                <div className="divide-y">
+                <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {selectedProject.candidates
                     .filter(c => c.name.toLowerCase().includes(candidateSearch.toLowerCase()))
                     .sort((a, b) => {
@@ -1533,63 +1533,65 @@ const saveProject = async () => {
                     return (
                       <div 
                         key={c.id} 
-                        className="p-4 hover:bg-gray-50 cursor-pointer"
+                        className="border rounded-lg p-4 hover:bg-gray-50 hover:shadow-md transition cursor-pointer"
                         onClick={() => goToCandidate(c)}
                       >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex gap-3 min-w-0 items-center">
-                            {/* Up/Down Arrows */}
-                            <div className="flex flex-col gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); moveCandidate(c.id, 'up'); }}
-                                disabled={isFirst}
-                                className={`p-1 rounded ${isFirst ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
-                              >
-                                <ArrowUp size={16} />
-                              </button>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); moveCandidate(c.id, 'down'); }}
-                                disabled={isLast}
-                                className={`p-1 rounded ${isLast ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
-                              >
-                                <ArrowDown size={16} />
-                              </button>
-                            </div>
-                            <div 
-                              className="relative group flex-shrink-0 cursor-pointer"
-                              onClick={(e) => { e.stopPropagation(); openPhotoModal(e, c); }}
+                        {/* Up/Down Arrows - Top Right */}
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); moveCandidate(c.id, 'up'); }}
+                              disabled={isFirst}
+                              className={`p-1 rounded ${isFirst ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
                             >
-                              <img src={c.photo} alt="" className="w-16 h-16 rounded-full object-cover border-2 border-gray-200" />
-                              <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Camera size={20} className="text-white" />
-                              </div>
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-medium text-gray-900 text-lg">{c.name}</p>
-                              {c.role && <p className="text-sm text-gray-500">{c.role}</p>}
-                            </div>
+                              <ArrowUp size={14} />
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); moveCandidate(c.id, 'down'); }}
+                              disabled={isLast}
+                              className={`p-1 rounded ${isLast ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
+                            >
+                              <ArrowDown size={14} />
+                            </button>
                           </div>
+                          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                            <button onClick={(e) => { e.stopPropagation(); setForm(c); setModal('candidate'); }} className="p-1 hover:bg-emerald-50 rounded-lg"><Edit2 size={14} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); deleteCandidateHandler(c.id); }} className="p-1 hover:bg-red-50 rounded-lg text-red-500"><Trash2 size={14} /></button>
+                          </div>
+                        </div>
 
-                          <div className="flex items-center gap-3 flex-shrink-0">
-                            {Object.keys(c.dailyLogs || {}).length > 0 ? (
-                              <PerformanceGauge percentage={performancePercentage} />
-                            ) : (
-                              <div className="w-24 flex items-center justify-center text-xs text-gray-400">
-                                No data
-                              </div>
-                            )}
-                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                              <button onClick={(e) => { e.stopPropagation(); setForm(c); setModal('candidate'); }} className="p-2 hover:bg-emerald-50 rounded-lg"><Edit2 size={16} /></button>
-                              <button onClick={(e) => { e.stopPropagation(); deleteCandidateHandler(c.id); }} className="p-2 hover:bg-red-50 rounded-lg text-red-500"><Trash2 size={16} /></button>
-                              <ChevronRight size={20} className="text-gray-400" />
+                        {/* Photo - Centered */}
+                        <div className="flex justify-center mb-3">
+                          <div 
+                            className="relative group cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); openPhotoModal(e, c); }}
+                          >
+                            <img src={c.photo} alt="" className="w-20 h-20 rounded-full object-cover border-2 border-gray-200" />
+                            <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Camera size={18} className="text-white" />
                             </div>
                           </div>
+                        </div>
+
+                        {/* Name & Role - Centered */}
+                        <div className="text-center mb-3">
+                          <p className="font-semibold text-gray-900 text-base truncate">{c.name}</p>
+                          {c.role && <p className="text-xs text-gray-500 truncate">{c.role}</p>}
+                        </div>
+
+                        {/* Performance Gauge - Centered */}
+                        <div className="flex justify-center">
+                          {Object.keys(c.dailyLogs || {}).length > 0 ? (
+                            <PerformanceGauge percentage={performancePercentage} />
+                          ) : (
+                            <div className="text-xs text-gray-400">No data</div>
+                          )}
                         </div>
                       </div>
                     );
                   })}
                   {selectedProject.candidates.filter(c => c.name.toLowerCase().includes(candidateSearch.toLowerCase())).length === 0 && (
-                    <div className="p-8 text-center text-gray-400">
+                    <div className="col-span-full p-8 text-center text-gray-400">
                       No candidates found matching "{candidateSearch}"
                     </div>
                   )}
