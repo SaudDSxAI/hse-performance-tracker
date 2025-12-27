@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 import AddingProjects
 import AddingCandidates
-import AddingCandidatesMonitoring
 import AuthRoutes
 
 # Create database tables
@@ -30,7 +29,7 @@ app.add_middleware(
 app.include_router(AuthRoutes.router)
 app.include_router(AddingProjects.router)
 app.include_router(AddingCandidates.router)
-app.include_router(AddingCandidatesMonitoring.router)
+# REMOVED: app.include_router(AddingCandidatesMonitoring.router)  # This was overriding AddingCandidates!
 
 @app.get("/")
 def root():
