@@ -71,6 +71,7 @@ class CandidateUpdate(BaseModel):
 class CandidateResponse(CandidateBase):
     id: int
     project_id: int
+    section_ids: List[int] = []
     
     class Config:
         from_attributes = True
@@ -101,18 +102,6 @@ class DailyLogBase(BaseModel):
     monthly_inspections_completed: Optional[bool] = None
     near_miss_reported: Optional[bool] = None
     weekly_training_briefed: Optional[bool] = None
-    
-    # Additional 10 new fields
-    daily_reports_followup: Optional[bool] = None
-    msra_communicated: Optional[bool] = None
-    consultant_responses: Optional[bool] = None
-    weekly_tbt_full_participation: Optional[bool] = None
-    welfare_facilities_monitored: Optional[bool] = None
-    monday_ncr_shared: Optional[bool] = None
-    safety_walks_conducted: Optional[bool] = None
-    training_sessions_conducted: Optional[bool] = None
-    barcode_system_100: Optional[bool] = None
-    task_briefings_participating: Optional[bool] = None
     
     # Comment and description
     comment: Optional[str] = None
@@ -166,6 +155,43 @@ class MonthlyActivityCreate(MonthlyActivityBase):
 class MonthlyActivityResponse(MonthlyActivityBase):
     id: int
     project_id: int
+    
+    class Config:
+        from_attributes = True
+
+# Section Schemas
+class SectionBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    display_order: int = 0
+
+class SectionCreate(SectionBase):
+    project_id: int
+
+class SectionUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    display_order: Optional[int] = None
+
+class SectionResponse(SectionBase):
+    id: int
+    project_id: int
+    
+    class Config:
+        from_attributes = True
+
+class SectionReorder(BaseModel):
+    section_ids: List[int]  # List of section IDs in new order
+
+# Candidate-Section Association Schemas
+class CandidateSectionCreate(BaseModel):
+    candidate_id: int
+    section_id: int
+
+class CandidateSectionResponse(BaseModel):
+    id: int
+    candidate_id: int
+    section_id: int
     
     class Config:
         from_attributes = True

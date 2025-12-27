@@ -381,3 +381,71 @@ export const reorderCandidates = async (projectId, candidateIds) => {
   });
   return data;
 };
+
+// ==================== SECTIONS ====================
+
+export const getSectionsByProject = async (projectId) => {
+  const data = await fetchAPI(`/sections/project/${projectId}`);
+  return data;
+};
+
+export const createSection = async (section, projectId) => {
+  const data = await fetchAPI('/sections', {
+    method: 'POST',
+    body: JSON.stringify({
+      project_id: projectId,
+      name: section.name,
+      description: section.description || null,
+      display_order: section.displayOrder || 0
+    }),
+  });
+  return data;
+};
+
+export const updateSection = async (id, section) => {
+  const data = await fetchAPI(`/sections/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      name: section.name,
+      description: section.description || null,
+      display_order: section.displayOrder || 0
+    }),
+  });
+  return data;
+};
+
+export const deleteSection = async (id) => {
+  await fetchAPI(`/sections/${id}`, {
+    method: 'DELETE',
+  });
+};
+
+export const reorderSections = async (projectId, sectionIds) => {
+  const data = await fetchAPI(`/sections/project/${projectId}/reorder`, {
+    method: 'PUT',
+    body: JSON.stringify({ section_ids: sectionIds }),
+  });
+  return data;
+};
+
+export const assignCandidateToSection = async (candidateId, sectionId) => {
+  const data = await fetchAPI('/sections/assign', {
+    method: 'POST',
+    body: JSON.stringify({
+      candidate_id: candidateId,
+      section_id: sectionId
+    }),
+  });
+  return data;
+};
+
+export const unassignCandidateFromSection = async (candidateId, sectionId) => {
+  await fetchAPI(`/sections/unassign/${candidateId}/${sectionId}`, {
+    method: 'DELETE',
+  });
+};
+
+export const getSectionCandidates = async (sectionId) => {
+  const data = await fetchAPI(`/sections/${sectionId}/candidates`);
+  return data;
+};

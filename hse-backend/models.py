@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, JSON, Date, Time, ForeignKey
+from sqlalchemy.orm import relationship
 from database import Base
 
 class User(Base):
@@ -24,6 +25,15 @@ class Project(Base):
     high_risk = Column(JSON, default=[])
     delete_pin = Column(String, nullable=True)  # PIN required to delete project
 
+class Section(Base):
+    __tablename__ = "sections"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"))
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    display_order = Column(Integer, default=0)
+
 class Candidate(Base):
     __tablename__ = "candidates"
     
@@ -33,6 +43,13 @@ class Candidate(Base):
     photo = Column(String)
     role = Column(String)
     display_order = Column(Integer, default=0)
+
+class CandidateSection(Base):
+    __tablename__ = "candidate_sections"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    candidate_id = Column(Integer, ForeignKey("candidates.id", ondelete="CASCADE"))
+    section_id = Column(Integer, ForeignKey("sections.id", ondelete="CASCADE"))
 
 class DailyLog(Base):
     __tablename__ = "daily_logs"

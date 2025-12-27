@@ -57,6 +57,8 @@ export default function App() {
   const [deletePinError, setDeletePinError] = useState('');
 
   const [projects, setProjects] = useState([]);
+  const [sections, setSections] = useState([]);
+  const [collapsedSections, setCollapsedSections] = useState({});
   const [view, setView] = useState('home');
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -174,9 +176,23 @@ export default function App() {
     }
   };
 
+  const fetchSections = async (projectId) => {
+    try {
+      const data = await api.getSectionsByProject(projectId);
+      setSections(data);
+    } catch (error) {
+      console.error('Error fetching sections:', error);
+    }
+  };
+
   // Navigation
-  const goHome = () => { setView('home'); setSelectedProject(null); setSelectedCandidate(null); };
-  const goToProject = (project) => { setSelectedProject(project); setSelectedCandidate(null); setView('project'); };
+  const goHome = () => { setView('home'); setSelectedProject(null); setSelectedCandidate(null); setSections([]); };
+  const goToProject = (project) => { 
+    setSelectedProject(project); 
+    setSelectedCandidate(null); 
+    setView('project');
+    fetchSections(project.id);
+  };
   const goToCandidate = (candidate) => { 
     setSelectedCandidate(candidate); 
     setView('candidate');
@@ -353,6 +369,70 @@ const saveProject = async () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Section CRUD
+  const saveSection = async () => {
+    try {
+      setLoading(true);
+      if (form.id) {
+        await api.updateSection(form.id, { name: form.name, description: form.description });
+      } else {
+        await api.createSection({ name: form.name, description: form.description }, selectedProject.id);
+      }
+      await fetchSections(selectedProject.id);
+      setModal(null);
+      alert('Section saved successfully!');
+    } catch (error) {
+      console.error('Error saving section:', error);
+      alert('Failed to save section');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteSectionHandler = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this section? Candidates will be unassigned but not deleted.')) return;
+    
+    try {
+      setLoading(true);
+      await api.deleteSection(id);
+      await fetchSections(selectedProject.id);
+      await fetchProjects(); // Refresh to update candidate section_ids
+      alert('Section deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting section:', error);
+      alert('Failed to delete section');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleCandidateSection = async (candidateId, sectionId) => {
+    const candidate = selectedProject.candidates.find(c => c.id === candidateId);
+    const isAssigned = candidate.section_ids && candidate.section_ids.includes(sectionId);
+    
+    try {
+      if (isAssigned) {
+        await api.unassignCandidateFromSection(candidateId, sectionId);
+      } else {
+        await api.assignCandidateToSection(candidateId, sectionId);
+      }
+      
+      // Refresh candidates
+      const candidates = await api.getCandidatesByProject(selectedProject.id);
+      setSelectedProject({ ...selectedProject, candidates });
+    } catch (error) {
+      console.error('Error toggling section assignment:', error);
+      alert('Failed to update section assignment');
+    }
+  };
+
+  const toggleSectionCollapse = (sectionId) => {
+    setCollapsedSections({
+      ...collapsedSections,
+      [sectionId]: !collapsedSections[sectionId]
+    });
   };
 
   // Daily Log Save

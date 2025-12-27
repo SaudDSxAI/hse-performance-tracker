@@ -2,59 +2,102 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from database import get_db
-from models import DailyLog, MonthlyKPI, MonthlyActivity
-from schemas import (
-    DailyLogCreate, DailyLogResponse,
-    MonthlyKPICreate, MonthlyKPIResponse,
-    MonthlyActivityCreate, MonthlyActivityResponse
-)
+from models import Candidate, CandidateSection
+from schemas import CandidateCreate, CandidateUpdate, CandidateResponse, CandidateReorder
 
-router = APIRouter(tags=["Monitoring"])
+router = APIRouter(prefix="/api/candidates", tags=["Candidates"])
 
-# Daily Logs
-@router.get("/api/candidates/{candidate_id}/daily-logs", response_model=List[DailyLogResponse])
-def get_daily_logs(candidate_id: int, db: Session = Depends(get_db)):
-    """Get all daily logs for a candidate"""
-    logs = db.query(DailyLog).filter(DailyLog.candidate_id == candidate_id).all()
-    return logs
+@router.get("/project/{project_id}", response_model=List[CandidateResponse])
+def get_candidates_by_project(project_id: int, db: Session = Depends(get_db)):
+    """Get all candidates for a specific project, ordered by display_order"""
+    candidates = db.query(Candidate).filter(
+        Candidate.project_id == project_id
+    ).order_by(Candidate.display_order).all()
+    
+    # Add section_ids to each candidate
+    result = []
+    for candidate in candidates:
+        candidate_dict = {
+            "id": candidate.id,
+            "project_id": candidate.project_id,
+            "name": candidate.name,
+            "photo": candidate.photo,
+            "role": candidate.role,
+            "display_order": candidate.display_order,
+            "section_ids": []
+        }
+        
+        # Get section IDs for this candidate
+        sections = db.query(CandidateSection).filter(
+            CandidateSection.candidate_id == candidate.id
+        ).all()
+        candidate_dict["section_ids"] = [s.section_id for s in sections]
+        
+        result.append(candidate_dict)
+    
+    return result
 
-@router.post("/api/daily-logs", response_model=DailyLogResponse)
-def create_daily_log(log: DailyLogCreate, db: Session = Depends(get_db)):
-    """Create a new daily log"""
-    db_log = DailyLog(**log.model_dump())
-    db.add(db_log)
+@router.get("/{candidate_id}", response_model=CandidateResponse)
+def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
+    """Get a specific candidate by ID"""
+    candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    return candidate
+
+@router.post("/", response_model=CandidateResponse)
+def create_candidate(candidate: CandidateCreate, db: Session = Depends(get_db)):
+    """Create a new candidate"""
+    # Get max display_order for this project
+    max_order = db.query(Candidate).filter(
+        Candidate.project_id == candidate.project_id
+    ).count()
+    
+    # Create candidate data without display_order from input
+    candidate_data = candidate.model_dump()
+    candidate_data['display_order'] = max_order  # Override with calculated order
+    
+    db_candidate = Candidate(**candidate_data)
+    db.add(db_candidate)
     db.commit()
-    db.refresh(db_log)
-    return db_log
+    db.refresh(db_candidate)
+    return db_candidate
 
-# Monthly KPIs
-@router.get("/api/candidates/{candidate_id}/monthly-kpis", response_model=List[MonthlyKPIResponse])
-def get_monthly_kpis(candidate_id: int, db: Session = Depends(get_db)):
-    """Get all monthly KPIs for a candidate"""
-    kpis = db.query(MonthlyKPI).filter(MonthlyKPI.candidate_id == candidate_id).all()
-    return kpis
-
-@router.post("/api/monthly-kpis", response_model=MonthlyKPIResponse)
-def create_monthly_kpi(kpi: MonthlyKPICreate, db: Session = Depends(get_db)):
-    """Create a new monthly KPI"""
-    db_kpi = MonthlyKPI(**kpi.model_dump())
-    db.add(db_kpi)
+@router.put("/{candidate_id}", response_model=CandidateResponse)
+def update_candidate(candidate_id: int, candidate: CandidateUpdate, db: Session = Depends(get_db)):
+    """Update an existing candidate"""
+    db_candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
+    if not db_candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    
+    for key, value in candidate.model_dump(exclude_unset=True).items():
+        setattr(db_candidate, key, value)
+    
     db.commit()
-    db.refresh(db_kpi)
-    return db_kpi
+    db.refresh(db_candidate)
+    return db_candidate
 
-# Monthly Activities
-@router.get("/api/projects/{project_id}/monthly-activities", response_model=List[MonthlyActivityResponse])
-def get_monthly_activities(project_id: int, db: Session = Depends(get_db)):
-    """Get all monthly activities for a project"""
-    activities = db.query(MonthlyActivity).filter(MonthlyActivity.project_id == project_id).all()
-    return activities
-
-@router.post("/api/monthly-activities", response_model=MonthlyActivityResponse)
-def create_monthly_activity(activity: MonthlyActivityCreate, db: Session = Depends(get_db)):
-    """Create a new monthly activity"""
-    db_activity = MonthlyActivity(**activity.model_dump())
-    db.add(db_activity)
+@router.delete("/{candidate_id}")
+def delete_candidate(candidate_id: int, db: Session = Depends(get_db)):
+    """Delete a candidate"""
+    db_candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
+    if not db_candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    
+    db.delete(db_candidate)
     db.commit()
-    db.refresh(db_activity)
-    return db_activity
+    return {"message": "Candidate deleted successfully"}
+
+@router.put("/project/{project_id}/reorder")
+def reorder_candidates(project_id: int, reorder: CandidateReorder, db: Session = Depends(get_db)):
+    """Reorder candidates for a project"""
+    for index, candidate_id in enumerate(reorder.candidate_ids):
+        candidate = db.query(Candidate).filter(
+            Candidate.id == candidate_id,
+            Candidate.project_id == project_id
+        ).first()
+        if candidate:
+            candidate.display_order = index
+    
+    db.commit()
+    return {"message": "Candidates reordered successfully"}
