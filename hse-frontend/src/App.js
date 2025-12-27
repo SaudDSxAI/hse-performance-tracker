@@ -639,7 +639,18 @@ const saveProject = async () => {
       { key: 'campaignParticipated', label: 'Campaign' },
       { key: 'monthlyInspectionsCompleted', label: 'Inspections' },
       { key: 'nearMissReported', label: 'Near Miss' },
-      { key: 'weeklyTrainingBriefed', label: 'Training' }
+      { key: 'weeklyTrainingBriefed', label: 'Training' },
+      // Additional 10 new fields
+      { key: 'dailyReportsFollowup', label: 'Daily Reports' },
+      { key: 'msraCommunicated', label: 'MSRA' },
+      { key: 'consultantResponses', label: 'Consultant' },
+      { key: 'weeklyTbtFullParticipation', label: 'Mass TBT' },
+      { key: 'welfareFacilitiesMonitored', label: 'Welfare' },
+      { key: 'mondayNcrShared', label: 'Monday NCR' },
+      { key: 'safetyWalksConducted', label: 'Safety Walks' },
+      { key: 'trainingSessionsConducted', label: 'Training Sessions' },
+      { key: 'barcodeSystem100', label: 'Barcode 100%' },
+      { key: 'taskBriefingsParticipating', label: 'Task Briefings' }
     ];
     
     // Initialize counters for each field
@@ -693,7 +704,11 @@ const saveProject = async () => {
       'inductionsCovered', 'barcodeImplemented', 'attendanceVerified', 'taskBriefing',
       'tbtConducted', 'violationBriefing', 'safetyObservationsRecorded', 'sorNcrClosed',
       'mockDrillParticipated', 'campaignParticipated', 'monthlyInspectionsCompleted',
-      'nearMissReported', 'weeklyTrainingBriefed'
+      'nearMissReported', 'weeklyTrainingBriefed',
+      'dailyReportsFollowup', 'msraCommunicated', 'consultantResponses',
+      'weeklyTbtFullParticipation', 'welfareFacilitiesMonitored', 'mondayNcrShared',
+      'safetyWalksConducted', 'trainingSessionsConducted', 'barcodeSystem100',
+      'taskBriefingsParticipating'
     ];
     
     let totalYes = 0;
@@ -728,7 +743,11 @@ const saveProject = async () => {
       'inductionsCovered', 'barcodeImplemented', 'attendanceVerified', 'taskBriefing',
       'tbtConducted', 'violationBriefing', 'safetyObservationsRecorded', 'sorNcrClosed',
       'mockDrillParticipated', 'campaignParticipated', 'monthlyInspectionsCompleted',
-      'nearMissReported', 'weeklyTrainingBriefed'
+      'nearMissReported', 'weeklyTrainingBriefed',
+      'dailyReportsFollowup', 'msraCommunicated', 'consultantResponses',
+      'weeklyTbtFullParticipation', 'welfareFacilitiesMonitored', 'mondayNcrShared',
+      'safetyWalksConducted', 'trainingSessionsConducted', 'barcodeSystem100',
+      'taskBriefingsParticipating'
     ];
     
     let totalYes = 0;
@@ -961,16 +980,16 @@ const saveProject = async () => {
       { key: 'nearMissReported', label: 'Near Miss Reported' },
       { key: 'weeklyTrainingBriefed', label: 'Weekly Training' },
       // Additional 10 new fields
-      { key: 'dailyReportsFollowup', label: 'Daily Reports Follow-up' },
+      { key: 'dailyReportsFollowup', label: 'Daily Reports' },
       { key: 'msraCommunicated', label: 'MSRA Communicated' },
       { key: 'consultantResponses', label: 'Consultant Responses' },
-      { key: 'weeklyTbtFullParticipation', label: 'Weekly Mass TBT' },
+      { key: 'weeklyTbtFullParticipation', label: 'Mass TBT' },
       { key: 'welfareFacilitiesMonitored', label: 'Welfare Facilities' },
-      { key: 'mondayNcrShared', label: 'Monday NCR Shared' },
-      { key: 'safetyWalksConducted', label: 'Safety Walks (7AM & 2PM)' },
-      { key: 'trainingSessionsConducted', label: 'Training Sessions (2/month)' },
+      { key: 'mondayNcrShared', label: 'Monday NCR' },
+      { key: 'safetyWalksConducted', label: 'Safety Walks' },
+      { key: 'trainingSessionsConducted', label: 'Training Sessions' },
       { key: 'barcodeSystem100', label: 'Barcode System 100%' },
-      { key: 'taskBriefingsParticipating', label: 'Task Briefings Participating' }
+      { key: 'taskBriefingsParticipating', label: 'Task Briefings' }
     ];
 
     // Calculate score for this log
