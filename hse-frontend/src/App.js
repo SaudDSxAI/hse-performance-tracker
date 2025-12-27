@@ -594,6 +594,22 @@ const saveProject = async () => {
     const fromDate = new Date(chartDateRange.from);
     const toDate = new Date(chartDateRange.to);
     
+    // Calculate total days in range
+    const totalDays = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24)) + 1;
+    
+    // Calculate attendance (days with both timeIn and timeOut)
+    let attendanceDays = 0;
+    Object.entries(logs).forEach(([date, log]) => {
+      const logDate = new Date(date);
+      if (logDate >= fromDate && logDate <= toDate) {
+        if (log.timeIn && log.timeOut) {
+          attendanceDays++;
+        }
+      }
+    });
+    
+    const attendancePercentage = totalDays > 0 ? Math.round((attendanceDays / totalDays) * 100) : 0;
+    
     // All task fields to track
     const taskFields = [
       { key: 'inductionsCovered', label: 'Inductions' },
@@ -629,12 +645,25 @@ const saveProject = async () => {
     
     const calcPercentage = (data) => data.answered > 0 ? Math.round((data.yes / data.answered) * 100) : 0;
     
-    return taskFields.map(f => ({
-      name: f.label,
-      value: calcPercentage(counters[f.key]),
-      yes: counters[f.key].yes,
-      total: counters[f.key].answered
-    }));
+    // Create the data array with attendance as the FIRST item
+    const performanceData = [
+      {
+        name: 'Attendance',
+        value: attendancePercentage,
+        yes: attendanceDays,
+        total: totalDays,
+        isAttendance: true // Flag to identify attendance bar for different styling
+      },
+      ...taskFields.map(f => ({
+        name: f.label,
+        value: calcPercentage(counters[f.key]),
+        yes: counters[f.key].yes,
+        total: counters[f.key].answered,
+        isAttendance: false
+      }))
+    ];
+    
+    return performanceData;
   };
 
   // Calculate overall performance percentage for speedometer
@@ -1496,7 +1525,10 @@ const saveProject = async () => {
                                 <div className="bg-white p-2 border rounded shadow-sm">
                                   <p className="text-sm font-medium">{data.name}</p>
                                   <p className="text-sm text-emerald-700">
-                                    {data.value}% ({data.yes}/{data.total} Yes)
+                                    {data.isAttendance 
+                                      ? `${data.value}% (${data.yes}/${data.total} days)`
+                                      : `${data.value}% (${data.yes}/${data.total} Yes)`
+                                    }
                                   </p>
                                 </div>
                               );
@@ -1504,7 +1536,11 @@ const saveProject = async () => {
                             return null;
                           }}
                         />
-                        <Bar dataKey="value" fill="#047857" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                          {getCandidatePerformanceData(selectedCandidate).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.isAttendance ? '#065f46' : '#047857'} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
