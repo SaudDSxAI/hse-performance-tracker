@@ -807,6 +807,65 @@ const saveProject = async () => {
     );
   };
 
+  // Calculate NCR/SOR Closure Rate
+  const getNcrSorClosureRate = (kpis) => {
+    const totalNcrs = (kpis.ncrsOpen || 0) + (kpis.ncrsClosed || 0);
+    
+    if (totalNcrs === 0) {
+      return {
+        percentage: 0,
+        closed: 0,
+        total: 0,
+        message: 'No NCR/SOR assigned',
+        color: 'gray',
+        bgColor: 'bg-gray-100',
+        textColor: 'text-gray-600',
+        borderColor: 'border-gray-200'
+      };
+    }
+    
+    const percentage = Math.round((kpis.ncrsClosed / totalNcrs) * 100);
+    
+    let message, color, bgColor, textColor, borderColor;
+    
+    if (percentage >= 90) {
+      message = `Excellent! All assigned NCR/SOR are ${percentage}% closed`;
+      color = 'green';
+      bgColor = 'bg-green-50';
+      textColor = 'text-green-700';
+      borderColor = 'border-green-200';
+    } else if (percentage >= 80) {
+      message = `Good! All assigned NCR/SOR are ${percentage}% closed`;
+      color = 'lime';
+      bgColor = 'bg-lime-50';
+      textColor = 'text-lime-700';
+      borderColor = 'border-lime-200';
+    } else if (percentage >= 70) {
+      message = `Fair! All assigned NCR/SOR are ${percentage}% closed`;
+      color = 'orange';
+      bgColor = 'bg-orange-50';
+      textColor = 'text-orange-700';
+      borderColor = 'border-orange-200';
+    } else {
+      message = `Needs attention! Only ${percentage}% of NCR/SOR are closed`;
+      color = 'red';
+      bgColor = 'bg-red-50';
+      textColor = 'text-red-700';
+      borderColor = 'border-red-200';
+    }
+    
+    return {
+      percentage,
+      closed: kpis.ncrsClosed || 0,
+      total: totalNcrs,
+      message,
+      color,
+      bgColor,
+      textColor,
+      borderColor
+    };
+  };
+
   // Breadcrumb
   const Breadcrumb = () => (
     <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
@@ -936,12 +995,35 @@ const saveProject = async () => {
   // Monthly KPIs Section
   const MonthlyKPIsSection = ({ data }) => {
     const kpis = data.monthlyKPIs || emptyMonthlyKPIs;
+    const closureRate = getNcrSorClosureRate(kpis);
+    
     return (
       <div className="bg-white rounded-xl shadow-sm border">
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="font-semibold text-lg flex items-center gap-2"><Activity size={20} />Monthly KPIs</h2>
           <button onClick={() => { setForm({ ...kpis }); setModal('kpis'); }} className="text-emerald-700 text-sm hover:underline">Update Values</button>
         </div>
+        
+        {/* NCR/SOR Closure Rate - Prominent Display */}
+        <div className="p-4 border-b">
+          <div className={`p-4 rounded-lg border-2 ${closureRate.bgColor} ${closureRate.borderColor}`}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-700">NCR/SOR Closure Performance</h3>
+              <span className={`text-2xl font-bold ${closureRate.textColor}`}>
+                {closureRate.percentage}%
+              </span>
+            </div>
+            <p className={`text-sm font-medium ${closureRate.textColor} mb-2`}>
+              {closureRate.message}
+            </p>
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+              <span className="font-medium">Details:</span>
+              <span>{closureRate.closed} closed / {closureRate.total} total NCR/SOR</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Existing KPI Grid */}
         <div className="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
             <p className="text-xs text-amber-600">Observations Open</p>
