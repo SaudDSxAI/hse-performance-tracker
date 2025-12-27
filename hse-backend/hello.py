@@ -1,212 +1,115 @@
 """
-Database Verification Script - HSE Performance Tracker
-This script checks if your data exists and diagnoses any issues
+Backend API Test Script
+Tests all endpoints to verify they work correctly
 """
 
-import psycopg2
-from psycopg2 import sql
+import requests
+import json
 
-# Railway PostgreSQL connection string
-# REPLACE THIS WITH YOUR ACTUAL DATABASE URL
-DATABASE_URL = "postgresql://postgres:ijzufiKzIPKYmzMbzewaNRzzHKBQhORc@centerbeam.proxy.rlwy.net:25154/railway"
+# CHANGE THIS to your backend URL
+BACKEND_URL = "https://hse-backend.up.railway.app"
 
-def verify_database():
-    print("🔍 HSE Performance Tracker - Database Verification")
+def test_api():
+    print("🔍 Testing HSE Backend API")
     print("=" * 60)
+    print(f"Backend URL: {BACKEND_URL}\n")
     
     try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cursor = conn.cursor()
-        
-        print("✅ Connected to database successfully!\n")
-        
-        # 1. Check all tables
-        print("📋 CHECKING TABLES:")
-        print("-" * 60)
-        cursor.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public' 
-            ORDER BY table_name;
-        """)
-        tables = cursor.fetchall()
-        print(f"Found {len(tables)} tables:")
-        for table in tables:
-            print(f"  ✓ {table[0]}")
+        # Test 1: Root endpoint
+        print("1️⃣ Testing root endpoint...")
+        response = requests.get(f"{BACKEND_URL}/")
+        print(f"   Status: {response.status_code}")
+        if response.status_code == 200:
+            print(f"   ✅ Response: {response.json()}")
+        else:
+            print(f"   ❌ Failed: {response.text}")
         print()
         
-        # 2. Check Projects
-        print("📊 PROJECTS DATA:")
-        print("-" * 60)
-        cursor.execute("SELECT COUNT(*) FROM projects;")
-        project_count = cursor.fetchone()[0]
-        print(f"Total Projects: {project_count}")
-        
-        if project_count > 0:
-            cursor.execute("SELECT id, name, location, company FROM projects LIMIT 5;")
-            projects = cursor.fetchall()
+        # Test 2: Get all projects
+        print("2️⃣ Testing GET /api/projects...")
+        response = requests.get(f"{BACKEND_URL}/api/projects")
+        print(f"   Status: {response.status_code}")
+        if response.status_code == 200:
+            projects = response.json()
+            print(f"   ✅ Found {len(projects)} project(s)")
             for p in projects:
-                print(f"  • ID: {p[0]} | Name: {p[1]} | Location: {p[2]} | Company: {p[3]}")
-        print()
-        
-        # 3. Check Candidates
-        print("👥 CANDIDATES DATA:")
-        print("-" * 60)
-        cursor.execute("SELECT COUNT(*) FROM candidates;")
-        candidate_count = cursor.fetchone()[0]
-        print(f"Total Candidates: {candidate_count}")
-        
-        if candidate_count > 0:
-            cursor.execute("""
-                SELECT c.id, c.name, c.role, p.name as project_name 
-                FROM candidates c
-                LEFT JOIN projects p ON c.project_id = p.id
-                LIMIT 10;
-            """)
-            candidates = cursor.fetchall()
-            for c in candidates:
-                print(f"  • ID: {c[0]} | Name: {c[1]} | Role: {c[2]} | Project: {c[3]}")
-        print()
-        
-        # 4. Check Candidate columns
-        print("🔧 CANDIDATES TABLE STRUCTURE:")
-        print("-" * 60)
-        cursor.execute("""
-            SELECT column_name, data_type 
-            FROM information_schema.columns 
-            WHERE table_name = 'candidates'
-            ORDER BY ordinal_position;
-        """)
-        columns = cursor.fetchall()
-        print(f"Candidates table has {len(columns)} columns:")
-        for col in columns:
-            print(f"  • {col[0]} ({col[1]})")
-        print()
-        
-        # 5. Check Daily Logs
-        print("📅 DAILY LOGS DATA:")
-        print("-" * 60)
-        cursor.execute("SELECT COUNT(*) FROM daily_logs;")
-        log_count = cursor.fetchone()[0]
-        print(f"Total Daily Logs: {log_count}")
-        
-        if log_count > 0:
-            cursor.execute("""
-                SELECT dl.id, c.name, dl.log_date, dl.time_in, dl.time_out
-                FROM daily_logs dl
-                LEFT JOIN candidates c ON dl.candidate_id = c.id
-                ORDER BY dl.log_date DESC
-                LIMIT 5;
-            """)
-            logs = cursor.fetchall()
-            print("Recent logs:")
-            for log in logs:
-                print(f"  • Candidate: {log[1]} | Date: {log[2]} | In: {log[3]} | Out: {log[4]}")
-        print()
-        
-        # 6. Check Daily Logs columns
-        print("🔧 DAILY_LOGS TABLE STRUCTURE:")
-        print("-" * 60)
-        cursor.execute("""
-            SELECT column_name, data_type 
-            FROM information_schema.columns 
-            WHERE table_name = 'daily_logs'
-            ORDER BY ordinal_position;
-        """)
-        log_columns = cursor.fetchall()
-        print(f"Daily_logs table has {len(log_columns)} columns:")
-        
-        # Check for new fields
-        new_fields = [
-            'daily_reports_followup', 'msra_communicated', 'consultant_responses',
-            'weekly_tbt_full_participation', 'welfare_facilities_monitored',
-            'monday_ncr_shared', 'safety_walks_conducted', 'training_sessions_conducted',
-            'barcode_system_100', 'task_briefings_participating'
-        ]
-        
-        existing_cols = [col[0] for col in log_columns]
-        for field in new_fields:
-            status = "✅" if field in existing_cols else "❌"
-            print(f"  {status} {field}")
-        print()
-        
-        # 7. Check Sections (if exists)
-        if 'sections' in [t[0] for t in tables]:
-            print("📁 SECTIONS DATA:")
-            print("-" * 60)
-            cursor.execute("SELECT COUNT(*) FROM sections;")
-            section_count = cursor.fetchone()[0]
-            print(f"Total Sections: {section_count}")
+                print(f"      • ID: {p.get('id')} | Name: {p.get('name')}")
             
-            if section_count > 0:
-                cursor.execute("""
-                    SELECT s.id, s.name, p.name as project_name
-                    FROM sections s
-                    LEFT JOIN projects p ON s.project_id = p.id
-                    LIMIT 5;
-                """)
-                sections = cursor.fetchall()
-                for s in sections:
-                    print(f"  • ID: {s[0]} | Name: {s[1]} | Project: {s[2]}")
-            print()
+            if len(projects) > 0:
+                project_id = projects[0]['id']
+                print(f"\n   Using project ID: {project_id} for further tests")
+                
+                # Test 3: Get candidates for project
+                print(f"\n3️⃣ Testing GET /api/candidates/project/{project_id}...")
+                response = requests.get(f"{BACKEND_URL}/api/candidates/project/{project_id}")
+                print(f"   Status: {response.status_code}")
+                
+                if response.status_code == 200:
+                    try:
+                        candidates = response.json()
+                        print(f"   ✅ Found {len(candidates)} candidate(s)")
+                        
+                        # Show first 3 candidates
+                        for i, c in enumerate(candidates[:3]):
+                            print(f"      • ID: {c.get('id')} | Name: {c.get('name')} | Role: {c.get('role')}")
+                        
+                        # Check structure of first candidate
+                        if len(candidates) > 0:
+                            print(f"\n   📋 First candidate structure:")
+                            first = candidates[0]
+                            print(f"      Keys: {list(first.keys())}")
+                            
+                            # Check for section_ids (shouldn't be there)
+                            if 'section_ids' in first:
+                                print(f"      ⚠️  WARNING: section_ids found in response!")
+                                print(f"         This will cause frontend issues!")
+                            else:
+                                print(f"      ✅ No section_ids (good!)")
+                    except json.JSONDecodeError:
+                        print(f"   ❌ Invalid JSON response")
+                        print(f"   Raw response: {response.text[:500]}")
+                else:
+                    print(f"   ❌ Failed: {response.text}")
+                    
+                    # Try to see error details
+                    try:
+                        error = response.json()
+                        print(f"   Error details: {json.dumps(error, indent=2)}")
+                    except:
+                        print(f"   Raw error: {response.text[:500]}")
+                
         else:
-            print("⚠️  SECTIONS TABLE NOT FOUND")
-            print("   Run migrate_sections.py to create it\n")
-        
-        # 8. Check Monthly KPIs
-        print("📊 MONTHLY KPIs DATA:")
-        print("-" * 60)
-        cursor.execute("SELECT COUNT(*) FROM monthly_kpis;")
-        kpi_count = cursor.fetchone()[0]
-        print(f"Total Monthly KPIs: {kpi_count}")
+            print(f"   ❌ Failed: {response.text}")
         print()
         
-        # 9. Summary
-        print("=" * 60)
-        print("📈 SUMMARY:")
-        print("=" * 60)
-        print(f"✓ Projects: {project_count}")
-        print(f"✓ Candidates: {candidate_count}")
-        print(f"✓ Daily Logs: {log_count}")
-        print(f"✓ Monthly KPIs: {kpi_count}")
-        
-        # Check if migrations are needed
-        print("\n🔧 MIGRATION STATUS:")
-        missing_new_fields = [f for f in new_fields if f not in existing_cols]
-        if missing_new_fields:
-            print(f"❌ Missing {len(missing_new_fields)} new daily log fields")
-            print("   → Run: python migrate_new_daily_fields.py")
+        # Test 4: Check API docs
+        print("4️⃣ Testing API documentation...")
+        response = requests.get(f"{BACKEND_URL}/docs")
+        print(f"   Status: {response.status_code}")
+        if response.status_code == 200:
+            print(f"   ✅ API docs accessible at {BACKEND_URL}/docs")
         else:
-            print("✅ All new daily log fields present")
+            print(f"   ❌ Failed")
+        print()
         
-        if 'sections' not in [t[0] for t in tables]:
-            print("❌ Sections tables not created")
-            print("   → Run: python migrate_sections.py")
-        else:
-            print("✅ Sections tables exist")
-        
-        cursor.close()
-        conn.close()
-        
-        print("\n" + "=" * 60)
-        if project_count == 0:
-            print("⚠️  WARNING: No projects found in database!")
-            print("   Your data might have been deleted or you're connected to wrong DB")
-        elif candidate_count == 0:
-            print("⚠️  WARNING: No candidates found!")
-            print("   Projects exist but no candidates added yet")
-        else:
-            print("✅ Database looks healthy!")
-            print("   All your data is present and accessible")
         print("=" * 60)
+        print("🎯 SUMMARY:")
+        print("=" * 60)
+        print("If candidates endpoint returns 500 error or empty:")
+        print("  → Check backend logs on Railway")
+        print("  → Verify all 3 files were uploaded correctly:")
+        print("    • main.py (no AddingSections import)")
+        print("    • schemas.py (has 23 fields, no section schemas)")
+        print("    • AddingCandidates.py (no section_ids)")
+        print("\nIf section_ids appears in candidate response:")
+        print("  → Backend has old AddingCandidates.py")
+        print("  → Re-upload the fixed version")
         
+    except requests.exceptions.ConnectionError:
+        print(f"❌ Cannot connect to {BACKEND_URL}")
+        print("   Is the backend running?")
     except Exception as e:
-        print(f"\n❌ ERROR: {e}")
-        print("\nPossible issues:")
-        print("  1. Wrong DATABASE_URL")
-        print("  2. Database connection failed")
-        print("  3. Tables don't exist")
-        raise
+        print(f"❌ Error: {e}")
 
 if __name__ == "__main__":
-    verify_database()
+    test_api()
