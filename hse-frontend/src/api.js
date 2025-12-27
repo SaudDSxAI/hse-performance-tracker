@@ -248,32 +248,15 @@ export const deleteProject = async (id) => {
 export const getCandidatesByProject = async (projectId) => {
   const data = await fetchAPI(`/candidates/project/${projectId}`);
   
-  // Fetch daily logs and KPIs for each candidate
-  const candidatesWithData = await Promise.all(
-    data.map(async (candidate) => {
-      try {
-        const [dailyLogs, monthlyKPIs] = await Promise.all([
-          getDailyLogsByCandidate(candidate.id),
-          getMonthlyKPIsByCandidate(candidate.id)
-        ]);
-        return transformCandidate(candidate, dailyLogs, monthlyKPIs);
-      } catch (error) {
-        console.error(`Error fetching data for candidate ${candidate.id}:`, error);
-        return transformCandidate(candidate, [], []);
-      }
-    })
-  );
-  
-  return candidatesWithData;
+  // Backend now returns complete data with dailyLogs and monthlyKPIs already included
+  // Just return the data as-is since it's already in the correct format
+  return data;
 };
 
 export const getCandidate = async (candidateId) => {
   const data = await fetchAPI(`/candidates/${candidateId}`);
-  const [dailyLogs, monthlyKPIs] = await Promise.all([
-    getDailyLogsByCandidate(candidateId),
-    getMonthlyKPIsByCandidate(candidateId)
-  ]);
-  return transformCandidate(data, dailyLogs, monthlyKPIs);
+  // Backend now returns complete data with dailyLogs and monthlyKPIs already included
+  return data;
 };
 
 export const createCandidate = async (candidate, projectId) => {
@@ -281,7 +264,20 @@ export const createCandidate = async (candidate, projectId) => {
     method: 'POST',
     body: JSON.stringify(transformCandidateToBackend(candidate, projectId)),
   });
-  return transformCandidate(data, [], []);
+  // Return simple candidate data (without full logs/KPIs initially)
+  return {
+    ...data,
+    dailyLogs: {},
+    monthlyKPIs: {
+      observationsOpen: 0,
+      observationsClosed: 0,
+      violations: 0,
+      ncrsOpen: 0,
+      ncrsClosed: 0,
+      weeklyReportsOpen: 0,
+      weeklyReportsClosed: 0
+    }
+  };
 };
 
 export const updateCandidate = async (id, candidate, projectId) => {
@@ -289,7 +285,20 @@ export const updateCandidate = async (id, candidate, projectId) => {
     method: 'PUT',
     body: JSON.stringify(transformCandidateToBackend(candidate, projectId)),
   });
-  return transformCandidate(data, [], []);
+  // Return simple candidate data (logs/KPIs maintained from existing data)
+  return {
+    ...data,
+    dailyLogs: candidate.dailyLogs || {},
+    monthlyKPIs: candidate.monthlyKPIs || {
+      observationsOpen: 0,
+      observationsClosed: 0,
+      violations: 0,
+      ncrsOpen: 0,
+      ncrsClosed: 0,
+      weeklyReportsOpen: 0,
+      weeklyReportsClosed: 0
+    }
+  };
 };
 
 export const deleteCandidate = async (id) => {
