@@ -61,6 +61,18 @@ class DailyLog(Base):
     near_miss_reported = Column(Boolean, nullable=True)           # Near miss reported this month?
     weekly_training_briefed = Column(Boolean, nullable=True)      # Weekly training briefed to workers?
     
+    # Additional 10 new fields
+    daily_reports_followup = Column(Boolean, nullable=True)       # Daily reports follow-up & coordination done?
+    msra_communicated = Column(Boolean, nullable=True)            # MSRA communicated to all key personnel?
+    consultant_responses = Column(Boolean, nullable=True)         # Immediate responses provided to consultant?
+    weekly_tbt_full_participation = Column(Boolean, nullable=True)# Weekly mass TBT with full participation?
+    welfare_facilities_monitored = Column(Boolean, nullable=True) # Workforce welfare facilities monitored?
+    monday_ncr_shared = Column(Boolean, nullable=True)            # Monday shared all pending NCRs/SORs?
+    safety_walks_conducted = Column(Boolean, nullable=True)       # Two site safety walks daily (7AM & 2PM)?
+    training_sessions_conducted = Column(Boolean, nullable=True)  # Minimum 2 HSE training sessions per month?
+    barcode_system_100 = Column(Boolean, nullable=True)           # Bar code system 100% for Plant/Equipment/PTW?
+    task_briefings_participating = Column(Boolean, nullable=True) # Engineers participating task briefings & verifying?
+    
     # Comment and description
     comment = Column(String(255), nullable=True)
     description = Column(String, nullable=True)

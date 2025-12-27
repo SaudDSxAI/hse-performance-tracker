@@ -158,6 +158,17 @@ const transformCandidate = (candidate, dailyLogs = [], monthlyKPIs = []) => {
       monthlyInspectionsCompleted: log.monthly_inspections_completed,
       nearMissReported: log.near_miss_reported,
       weeklyTrainingBriefed: log.weekly_training_briefed,
+      // Additional 10 new fields
+      dailyReportsFollowup: log.daily_reports_followup,
+      msraCommunicated: log.msra_communicated,
+      consultantResponses: log.consultant_responses,
+      weeklyTbtFullParticipation: log.weekly_tbt_full_participation,
+      welfareFacilitiesMonitored: log.welfare_facilities_monitored,
+      mondayNcrShared: log.monday_ncr_shared,
+      safetyWalksConducted: log.safety_walks_conducted,
+      trainingSessionsConducted: log.training_sessions_conducted,
+      barcodeSystem100: log.barcode_system_100,
+      taskBriefingsParticipating: log.task_briefings_participating,
       // Comment and description
       comment: log.comment,
       description: log.description
@@ -312,6 +323,17 @@ export const createDailyLog = async (candidateId, date, log) => {
       monthly_inspections_completed: log.monthlyInspectionsCompleted,
       near_miss_reported: log.nearMissReported,
       weekly_training_briefed: log.weeklyTrainingBriefed,
+      // Additional 10 new fields
+      daily_reports_followup: log.dailyReportsFollowup,
+      msra_communicated: log.msraCommunicated,
+      consultant_responses: log.consultantResponses,
+      weekly_tbt_full_participation: log.weeklyTbtFullParticipation,
+      welfare_facilities_monitored: log.welfareFacilitiesMonitored,
+      monday_ncr_shared: log.mondayNcrShared,
+      safety_walks_conducted: log.safetyWalksConducted,
+      training_sessions_conducted: log.trainingSessionsConducted,
+      barcode_system_100: log.barcodeSystem100,
+      task_briefings_participating: log.taskBriefingsParticipating,
       // Comment and description
       comment: log.comment || null,
       description: log.description || null

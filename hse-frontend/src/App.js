@@ -27,6 +27,17 @@ const emptyDailyLog = {
   monthlyInspectionsCompleted: null,
   nearMissReported: null,
   weeklyTrainingBriefed: null,
+  // Additional 10 new fields
+  dailyReportsFollowup: null,
+  msraCommunicated: null,
+  consultantResponses: null,
+  weeklyTbtFullParticipation: null,
+  welfareFacilitiesMonitored: null,
+  mondayNcrShared: null,
+  safetyWalksConducted: null,
+  trainingSessionsConducted: null,
+  barcodeSystem100: null,
+  taskBriefingsParticipating: null,
   comment: '',
   description: ''
 };
@@ -179,7 +190,11 @@ export default function App() {
       'inductionsCovered', 'barcodeImplemented', 'attendanceVerified', 'taskBriefing',
       'tbtConducted', 'violationBriefing', 'safetyObservationsRecorded', 'sorNcrClosed',
       'mockDrillParticipated', 'campaignParticipated', 'monthlyInspectionsCompleted',
-      'nearMissReported', 'weeklyTrainingBriefed'
+      'nearMissReported', 'weeklyTrainingBriefed',
+      'dailyReportsFollowup', 'msraCommunicated', 'consultantResponses', 
+      'weeklyTbtFullParticipation', 'welfareFacilitiesMonitored', 'mondayNcrShared',
+      'safetyWalksConducted', 'trainingSessionsConducted', 'barcodeSystem100', 
+      'taskBriefingsParticipating'
     ];
     
     const isLogEmpty = !todayLog || taskKeys.every(key => todayLog[key] === null || todayLog[key] === undefined);
@@ -759,8 +774,8 @@ const saveProject = async () => {
     const needsWork = candidateScores.filter(c => c.score < 40).length;
     
     const distribution = [
-      { name: 'Excellent', value: excellent, color: '#22C55E' },
-      { name: 'Good', value: good, color: '#EAB308' },
+      { name: 'Excellent', value: excellent, color: '#10B981' },
+      { name: 'Good', value: good, color: '#F59E0B' },
       { name: 'Fair', value: fair, color: '#F97316' },
       { name: 'Needs Work', value: needsWork, color: '#EF4444' }
     ].filter(d => d.value > 0);
@@ -771,10 +786,10 @@ const saveProject = async () => {
   // Speedometer Component
   const PerformanceGauge = ({ percentage }) => {
     const getColor = () => {
-      if (percentage >= 80) return '#22C55E';
-      if (percentage >= 60) return '#EAB308';
-      if (percentage >= 40) return '#F97316';
-      return '#EF4444';
+      if (percentage >= 80) return '#10B981'; // Vibrant green
+      if (percentage >= 60) return '#F59E0B'; // Vibrant amber/yellow
+      if (percentage >= 40) return '#F97316'; // Vibrant orange
+      return '#EF4444'; // Vibrant red
     };
 
     const getLabel = () => {
@@ -790,10 +805,26 @@ const saveProject = async () => {
       <div className="flex flex-col items-center">
         <div className="relative w-24 h-12">
           <svg className="w-24 h-12" viewBox="0 0 100 50">
-            <path d="M 5 45 A 40 40 0 0 1 25 10" fill="none" stroke="#EF4444" strokeWidth="8" opacity="0.3" />
-            <path d="M 25 10 A 40 40 0 0 1 40 5" fill="none" stroke="#F97316" strokeWidth="8" opacity="0.3" />
-            <path d="M 40 5 A 40 40 0 0 1 60 5" fill="none" stroke="#EAB308" strokeWidth="8" opacity="0.3" />
-            <path d="M 60 5 A 40 40 0 0 1 95 45" fill="none" stroke="#22C55E" strokeWidth="8" opacity="0.3" />
+            <defs>
+              <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#EF4444" />
+                <stop offset="22.2%" stopColor="#EF4444" />
+                <stop offset="22.2%" stopColor="#F97316" />
+                <stop offset="33.3%" stopColor="#F97316" />
+                <stop offset="33.3%" stopColor="#F59E0B" />
+                <stop offset="44.4%" stopColor="#F59E0B" />
+                <stop offset="44.4%" stopColor="#10B981" />
+                <stop offset="100%" stopColor="#10B981" />
+              </linearGradient>
+            </defs>
+            {/* Single continuous arc with gradient */}
+            <path 
+              d="M 5 45 A 40 40 0 0 1 95 45" 
+              fill="none" 
+              stroke="url(#gaugeGradient)" 
+              strokeWidth="8"
+              strokeLinecap="butt"
+            />
             <line x1="50" y1="45" x2="50" y2="15" stroke={getColor()} strokeWidth="2" strokeLinecap="round"
               style={{ transformOrigin: '50px 45px', transform: `rotate(${rotation}deg)`, transition: 'transform 0.3s ease' }} />
             <circle cx="50" cy="45" r="3" fill={getColor()} />
@@ -928,7 +959,18 @@ const saveProject = async () => {
       { key: 'campaignParticipated', label: 'Campaign' },
       { key: 'monthlyInspectionsCompleted', label: 'Monthly Inspections' },
       { key: 'nearMissReported', label: 'Near Miss Reported' },
-      { key: 'weeklyTrainingBriefed', label: 'Weekly Training' }
+      { key: 'weeklyTrainingBriefed', label: 'Weekly Training' },
+      // Additional 10 new fields
+      { key: 'dailyReportsFollowup', label: 'Daily Reports Follow-up' },
+      { key: 'msraCommunicated', label: 'MSRA Communicated' },
+      { key: 'consultantResponses', label: 'Consultant Responses' },
+      { key: 'weeklyTbtFullParticipation', label: 'Weekly Mass TBT' },
+      { key: 'welfareFacilitiesMonitored', label: 'Welfare Facilities' },
+      { key: 'mondayNcrShared', label: 'Monday NCR Shared' },
+      { key: 'safetyWalksConducted', label: 'Safety Walks (7AM & 2PM)' },
+      { key: 'trainingSessionsConducted', label: 'Training Sessions (2/month)' },
+      { key: 'barcodeSystem100', label: 'Barcode System 100%' },
+      { key: 'taskBriefingsParticipating', label: 'Task Briefings Participating' }
     ];
 
     // Calculate score for this log
@@ -1323,10 +1365,10 @@ const saveProject = async () => {
                   }
                   
                   const getColor = (pct) => {
-                    if (pct >= 80) return '#22C55E';
-                    if (pct >= 60) return '#EAB308';
-                    if (pct >= 40) return '#F97316';
-                    return '#EF4444';
+                    if (pct >= 80) return '#10B981'; // Vibrant green
+                    if (pct >= 60) return '#F59E0B'; // Vibrant amber/yellow
+                    if (pct >= 40) return '#F97316'; // Vibrant orange
+                    return '#EF4444'; // Vibrant red
                   };
                   
                   const getLabel = (pct) => {
@@ -1342,10 +1384,26 @@ const saveProject = async () => {
                       <div className="flex flex-col items-center">
                         <div className="relative w-40 h-20">
                           <svg className="w-40 h-20" viewBox="0 0 100 50">
-                            <path d="M 5 45 A 40 40 0 0 1 25 10" fill="none" stroke="#EF4444" strokeWidth="8" opacity="0.3" />
-                            <path d="M 25 10 A 40 40 0 0 1 40 5" fill="none" stroke="#F97316" strokeWidth="8" opacity="0.3" />
-                            <path d="M 40 5 A 40 40 0 0 1 60 5" fill="none" stroke="#EAB308" strokeWidth="8" opacity="0.3" />
-                            <path d="M 60 5 A 40 40 0 0 1 95 45" fill="none" stroke="#22C55E" strokeWidth="8" opacity="0.3" />
+                            <defs>
+                              <linearGradient id="largeGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="#EF4444" />
+                                <stop offset="22.2%" stopColor="#EF4444" />
+                                <stop offset="22.2%" stopColor="#F97316" />
+                                <stop offset="33.3%" stopColor="#F97316" />
+                                <stop offset="33.3%" stopColor="#F59E0B" />
+                                <stop offset="44.4%" stopColor="#F59E0B" />
+                                <stop offset="44.4%" stopColor="#10B981" />
+                                <stop offset="100%" stopColor="#10B981" />
+                              </linearGradient>
+                            </defs>
+                            {/* Single continuous arc with gradient */}
+                            <path 
+                              d="M 5 45 A 40 40 0 0 1 95 45" 
+                              fill="none" 
+                              stroke="url(#largeGaugeGradient)" 
+                              strokeWidth="8"
+                              strokeLinecap="butt"
+                            />
                             <line x1="50" y1="45" x2="50" y2="12" stroke={getColor(stats.average)} strokeWidth="3" strokeLinecap="round"
                               style={{ transformOrigin: '50px 45px', transform: `rotate(${-90 + (stats.average * 1.8)}deg)`, transition: 'transform 0.5s ease' }} />
                             <circle cx="50" cy="45" r="5" fill={getColor(stats.average)} />
@@ -1939,7 +1997,18 @@ const saveProject = async () => {
                 { key: 'campaignParticipated', label: 'Participated in campaign this month?' },
                 { key: 'monthlyInspectionsCompleted', label: 'Monthly inspections 100% completed?' },
                 { key: 'nearMissReported', label: 'Near miss reported this month?' },
-                { key: 'weeklyTrainingBriefed', label: 'Weekly training briefed to supervisors/workers?' }
+                { key: 'weeklyTrainingBriefed', label: 'Weekly training briefed to supervisors/workers?' },
+                // Additional 10 new fields
+                { key: 'dailyReportsFollowup', label: 'Daily reports follow-up & coordination done from the team?' },
+                { key: 'msraCommunicated', label: 'MSRA communicated to all key personnel prior to commencement?' },
+                { key: 'consultantResponses', label: 'Immediate responses provided to the Consultant in WhatsApp?' },
+                { key: 'weeklyTbtFullParticipation', label: 'Weekly mass TBT conducted for entire workforce with full participation?' },
+                { key: 'welfareFacilitiesMonitored', label: 'Workforce welfare facilities (rest areas, toilets, water) monitored?' },
+                { key: 'mondayNcrShared', label: 'Monday shared all pending NCRs/SORs, Weekly/ESLT report & follow up?' },
+                { key: 'safetyWalksConducted', label: 'HSE Engineers performed two site safety walks daily (7:00 AM & 2:00 PM)?' },
+                { key: 'trainingSessionsConducted', label: 'Engineers conducted minimum two (2) HSE training sessions per month?' },
+                { key: 'barcodeSystem100', label: 'Bar Code system implemented 100% for Plant/Equipment/PTW?' },
+                { key: 'taskBriefingsParticipating', label: 'Engineers participating in task briefings & verifying?' }
               ].map(item => (
                 <div key={item.key} className="p-3 border rounded-lg">
                   <p className="text-sm font-medium mb-2">{item.label}</p>

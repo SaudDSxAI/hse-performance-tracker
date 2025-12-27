@@ -102,6 +102,18 @@ class DailyLogBase(BaseModel):
     near_miss_reported: Optional[bool] = None
     weekly_training_briefed: Optional[bool] = None
     
+    # Additional 10 new fields
+    daily_reports_followup: Optional[bool] = None
+    msra_communicated: Optional[bool] = None
+    consultant_responses: Optional[bool] = None
+    weekly_tbt_full_participation: Optional[bool] = None
+    welfare_facilities_monitored: Optional[bool] = None
+    monday_ncr_shared: Optional[bool] = None
+    safety_walks_conducted: Optional[bool] = None
+    training_sessions_conducted: Optional[bool] = None
+    barcode_system_100: Optional[bool] = None
+    task_briefings_participating: Optional[bool] = None
+    
     # Comment and description
     comment: Optional[str] = None
     description: Optional[str] = None
