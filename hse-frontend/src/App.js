@@ -790,10 +790,14 @@ const saveProject = async () => {
       <div className="flex flex-col items-center">
         <div className="relative w-24 h-12">
           <svg className="w-24 h-12" viewBox="0 0 100 50">
-            <path d="M 5 45 A 40 40 0 0 1 25 10" fill="none" stroke="#EF4444" strokeWidth="8" opacity="1" />
-            <path d="M 25 10 A 40 40 0 0 1 40 5" fill="none" stroke="#F97316" strokeWidth="8" opacity="1" />
-            <path d="M 40 5 A 40 40 0 0 1 60 5" fill="none" stroke="#F59E0B" strokeWidth="8" opacity="1" />
-            <path d="M 60 5 A 40 40 0 0 1 95 45" fill="none" stroke="#10B981" strokeWidth="8" opacity="1" />
+            {/* Red section: 0-40% (0° to 72°) */}
+            <path d="M 5 45 A 40 40 0 0 1 31.43 7.57" fill="none" stroke="#EF4444" strokeWidth="8" strokeLinecap="butt" />
+            {/* Orange section: 40-60% (72° to 108°) */}
+            <path d="M 31.43 7.57 A 40 40 0 0 1 50 5" fill="none" stroke="#F97316" strokeWidth="8" strokeLinecap="butt" />
+            {/* Yellow section: 60-80% (108° to 144°) */}
+            <path d="M 50 5 A 40 40 0 0 1 68.57 7.57" fill="none" stroke="#F59E0B" strokeWidth="8" strokeLinecap="butt" />
+            {/* Green section: 80-100% (144° to 180°) */}
+            <path d="M 68.57 7.57 A 40 40 0 0 1 95 45" fill="none" stroke="#10B981" strokeWidth="8" strokeLinecap="butt" />
             <line x1="50" y1="45" x2="50" y2="15" stroke={getColor()} strokeWidth="2" strokeLinecap="round"
               style={{ transformOrigin: '50px 45px', transform: `rotate(${rotation}deg)`, transition: 'transform 0.3s ease' }} />
             <circle cx="50" cy="45" r="3" fill={getColor()} />
@@ -1342,10 +1346,14 @@ const saveProject = async () => {
                       <div className="flex flex-col items-center">
                         <div className="relative w-40 h-20">
                           <svg className="w-40 h-20" viewBox="0 0 100 50">
-                            <path d="M 5 45 A 40 40 0 0 1 25 10" fill="none" stroke="#EF4444" strokeWidth="8" opacity="1" />
-                            <path d="M 25 10 A 40 40 0 0 1 40 5" fill="none" stroke="#F97316" strokeWidth="8" opacity="1" />
-                            <path d="M 40 5 A 40 40 0 0 1 60 5" fill="none" stroke="#F59E0B" strokeWidth="8" opacity="1" />
-                            <path d="M 60 5 A 40 40 0 0 1 95 45" fill="none" stroke="#10B981" strokeWidth="8" opacity="1" />
+                            {/* Red section: 0-40% (0° to 72°) */}
+                            <path d="M 5 45 A 40 40 0 0 1 31.43 7.57" fill="none" stroke="#EF4444" strokeWidth="8" strokeLinecap="butt" />
+                            {/* Orange section: 40-60% (72° to 108°) */}
+                            <path d="M 31.43 7.57 A 40 40 0 0 1 50 5" fill="none" stroke="#F97316" strokeWidth="8" strokeLinecap="butt" />
+                            {/* Yellow section: 60-80% (108° to 144°) */}
+                            <path d="M 50 5 A 40 40 0 0 1 68.57 7.57" fill="none" stroke="#F59E0B" strokeWidth="8" strokeLinecap="butt" />
+                            {/* Green section: 80-100% (144° to 180°) */}
+                            <path d="M 68.57 7.57 A 40 40 0 0 1 95 45" fill="none" stroke="#10B981" strokeWidth="8" strokeLinecap="butt" />
                             <line x1="50" y1="45" x2="50" y2="12" stroke={getColor(stats.average)} strokeWidth="3" strokeLinecap="round"
                               style={{ transformOrigin: '50px 45px', transform: `rotate(${-90 + (stats.average * 1.8)}deg)`, transition: 'transform 0.5s ease' }} />
                             <circle cx="50" cy="45" r="5" fill={getColor(stats.average)} />
