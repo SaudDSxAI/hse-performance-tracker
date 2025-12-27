@@ -1,6 +1,7 @@
 const API_BASE = 'https://hse-backend.up.railway.app/api';
 
 console.log('🔧 API_BASE:', API_BASE);
+console.log('📦 API.JS VERSION: 2.0 - CONSOLIDATED ENDPOINTS');
 
 // Token management
 const getToken = () => localStorage.getItem('hse_token');
@@ -95,6 +96,8 @@ export const verifyDeletePin = async (projectId, pin) => {
   return data;
 };
 
+// ==================== DATA TRANSFORMATION ====================
+
 // Transform backend data (snake_case) to frontend (camelCase)
 const transformProject = (project) => ({
   id: project.id,
@@ -136,76 +139,6 @@ const transformProjectToBackend = (project) => ({
   delete_pin: project.deletePin || null
 });
 
-const transformCandidate = (candidate, dailyLogs = [], monthlyKPIs = []) => {
-  // Transform daily logs array to object keyed by date
-  const logsObject = {};
-  dailyLogs.forEach(log => {
-    logsObject[log.log_date] = {
-      timeIn: log.time_in,
-      timeOut: log.time_out,
-      taskBriefing: log.task_briefing,
-      tbtConducted: log.tbt_conducted,
-      violationBriefing: log.violation_briefing,
-      checklistSubmitted: log.checklist_submitted,
-      // New fields
-      inductionsCovered: log.inductions_covered,
-      barcodeImplemented: log.barcode_implemented,
-      attendanceVerified: log.attendance_verified,
-      safetyObservationsRecorded: log.safety_observations_recorded,
-      sorNcrClosed: log.sor_ncr_closed,
-      mockDrillParticipated: log.mock_drill_participated,
-      campaignParticipated: log.campaign_participated,
-      monthlyInspectionsCompleted: log.monthly_inspections_completed,
-      nearMissReported: log.near_miss_reported,
-      weeklyTrainingBriefed: log.weekly_training_briefed,
-      // Additional 10 new fields
-      dailyReportsFollowup: log.daily_reports_followup,
-      msraCommunicated: log.msra_communicated,
-      consultantResponses: log.consultant_responses,
-      weeklyTbtFullParticipation: log.weekly_tbt_full_participation,
-      welfareFacilitiesMonitored: log.welfare_facilities_monitored,
-      mondayNcrShared: log.monday_ncr_shared,
-      safetyWalksConducted: log.safety_walks_conducted,
-      trainingSessionsConducted: log.training_sessions_conducted,
-      barcodeSystem100: log.barcode_system_100,
-      taskBriefingsParticipating: log.task_briefings_participating,
-      // Comment and description
-      comment: log.comment,
-      description: log.description
-    };
-  });
-
-  // Get latest monthly KPI
-  const latestKPI = monthlyKPIs.length > 0 ? monthlyKPIs[0] : null;
-  const kpis = latestKPI ? {
-    observationsOpen: latestKPI.observations_open,
-    observationsClosed: latestKPI.observations_closed,
-    violations: latestKPI.violations,
-    ncrsOpen: latestKPI.ncrs_open,
-    ncrsClosed: latestKPI.ncrs_closed,
-    weeklyReportsOpen: latestKPI.weekly_reports_open,
-    weeklyReportsClosed: latestKPI.weekly_reports_closed
-  } : {
-    observationsOpen: 0,
-    observationsClosed: 0,
-    violations: 0,
-    ncrsOpen: 0,
-    ncrsClosed: 0,
-    weeklyReportsOpen: 0,
-    weeklyReportsClosed: 0
-  };
-
-  return {
-    id: candidate.id,
-    name: candidate.name,
-    photo: candidate.photo,
-    role: candidate.role,
-    displayOrder: candidate.display_order || 0,
-    dailyLogs: logsObject,
-    monthlyKPIs: kpis
-  };
-};
-
 const transformCandidateToBackend = (candidate, projectId) => ({
   project_id: projectId,
   name: candidate.name,
@@ -244,18 +177,30 @@ export const deleteProject = async (id) => {
 };
 
 // ==================== CANDIDATES ====================
+// ⚠️ IMPORTANT: Backend returns COMPLETE data with dailyLogs and monthlyKPIs
+// We do NOT make separate API calls for logs/KPIs anymore
 
 export const getCandidatesByProject = async (projectId) => {
+  console.log('📥 Getting candidates for project', projectId, '(with dailyLogs & monthlyKPIs included)');
   const data = await fetchAPI(`/candidates/project/${projectId}`);
   
-  // Backend now returns complete data with dailyLogs and monthlyKPIs already included
-  // Just return the data as-is since it's already in the correct format
+  // Backend returns complete data structure:
+  // [{
+  //   id, name, photo, role, displayOrder,
+  //   dailyLogs: { "2024-01-01": {...}, ... },
+  //   monthlyKPIs: { observationsOpen, ... }
+  // }]
+  
+  console.log('✅ Received', data.length, 'candidates with complete data');
   return data;
 };
 
 export const getCandidate = async (candidateId) => {
+  console.log('📥 Getting candidate', candidateId, '(with dailyLogs & monthlyKPIs included)');
   const data = await fetchAPI(`/candidates/${candidateId}`);
-  // Backend now returns complete data with dailyLogs and monthlyKPIs already included
+  
+  // Backend returns complete data with dailyLogs and monthlyKPIs already included
+  console.log('✅ Received candidate with complete data');
   return data;
 };
 
@@ -264,9 +209,14 @@ export const createCandidate = async (candidate, projectId) => {
     method: 'POST',
     body: JSON.stringify(transformCandidateToBackend(candidate, projectId)),
   });
-  // Return simple candidate data (without full logs/KPIs initially)
+  
+  // Return with empty logs/KPIs for new candidate
   return {
-    ...data,
+    id: data.id,
+    name: data.name,
+    photo: data.photo,
+    role: data.role,
+    displayOrder: data.display_order || 0,
     dailyLogs: {},
     monthlyKPIs: {
       observationsOpen: 0,
@@ -285,9 +235,14 @@ export const updateCandidate = async (id, candidate, projectId) => {
     method: 'PUT',
     body: JSON.stringify(transformCandidateToBackend(candidate, projectId)),
   });
-  // Return simple candidate data (logs/KPIs maintained from existing data)
+  
+  // Return updated candidate while preserving logs/KPIs
   return {
-    ...data,
+    id: data.id,
+    name: data.name,
+    photo: data.photo,
+    role: data.role,
+    displayOrder: data.display_order || 0,
     dailyLogs: candidate.dailyLogs || {},
     monthlyKPIs: candidate.monthlyKPIs || {
       observationsOpen: 0,
@@ -307,7 +262,17 @@ export const deleteCandidate = async (id) => {
   });
 };
 
+export const reorderCandidates = async (projectId, candidateIds) => {
+  const data = await fetchAPI(`/candidates/project/${projectId}/reorder`, {
+    method: 'PUT',
+    body: JSON.stringify({ candidate_ids: candidateIds }),
+  });
+  return data;
+};
+
 // ==================== DAILY LOGS ====================
+// These endpoints are for CREATING/UPDATING logs, NOT fetching them
+// (Logs are fetched as part of getCandidatesByProject)
 
 export const createDailyLog = async (candidateId, date, log) => {
   const data = await fetchAPI('/daily-logs', {
@@ -321,7 +286,6 @@ export const createDailyLog = async (candidateId, date, log) => {
       tbt_conducted: log.tbtConducted,
       violation_briefing: log.violationBriefing,
       checklist_submitted: log.checklistSubmitted,
-      // New fields
       inductions_covered: log.inductionsCovered,
       barcode_implemented: log.barcodeImplemented,
       attendance_verified: log.attendanceVerified,
@@ -332,7 +296,6 @@ export const createDailyLog = async (candidateId, date, log) => {
       monthly_inspections_completed: log.monthlyInspectionsCompleted,
       near_miss_reported: log.nearMissReported,
       weekly_training_briefed: log.weeklyTrainingBriefed,
-      // Additional 10 new fields
       daily_reports_followup: log.dailyReportsFollowup,
       msra_communicated: log.msraCommunicated,
       consultant_responses: log.consultantResponses,
@@ -343,7 +306,6 @@ export const createDailyLog = async (candidateId, date, log) => {
       training_sessions_conducted: log.trainingSessionsConducted,
       barcode_system_100: log.barcodeSystem100,
       task_briefings_participating: log.taskBriefingsParticipating,
-      // Comment and description
       comment: log.comment || null,
       description: log.description || null
     }),
@@ -351,12 +313,9 @@ export const createDailyLog = async (candidateId, date, log) => {
   return data;
 };
 
-export const getDailyLogsByCandidate = async (candidateId) => {
-  const data = await fetchAPI(`/candidates/${candidateId}/daily-logs`);
-  return data;
-};
-
 // ==================== MONTHLY KPIs ====================
+// These endpoints are for CREATING/UPDATING KPIs, NOT fetching them
+// (KPIs are fetched as part of getCandidatesByProject)
 
 export const createMonthlyKPI = async (candidateId, month, kpis) => {
   const data = await fetchAPI('/monthly-kpis', {
@@ -372,21 +331,6 @@ export const createMonthlyKPI = async (candidateId, month, kpis) => {
       weekly_reports_open: kpis.weeklyReportsOpen || 0,
       weekly_reports_closed: kpis.weeklyReportsClosed || 0
     }),
-  });
-  return data;
-};
-
-export const getMonthlyKPIsByCandidate = async (candidateId) => {
-  const data = await fetchAPI(`/candidates/${candidateId}/monthly-kpis`);
-  return data;
-};
-
-// ==================== CANDIDATE REORDER ====================
-
-export const reorderCandidates = async (projectId, candidateIds) => {
-  const data = await fetchAPI(`/candidates/project/${projectId}/reorder`, {
-    method: 'PUT',
-    body: JSON.stringify({ candidate_ids: candidateIds }),
   });
   return data;
 };
