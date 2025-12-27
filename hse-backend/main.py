@@ -4,7 +4,6 @@ from database import engine, Base
 import AddingProjects
 import AddingCandidates
 import AddingCandidatesMonitoring
-import AddingSections
 import AuthRoutes
 
 # Create database tables
@@ -32,7 +31,6 @@ app.include_router(AuthRoutes.router)
 app.include_router(AddingProjects.router)
 app.include_router(AddingCandidates.router)
 app.include_router(AddingCandidatesMonitoring.router)
-app.include_router(AddingSections.router)
 
 @app.get("/")
 def root():
