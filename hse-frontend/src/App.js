@@ -81,6 +81,7 @@ export default function App() {
   const [selectedSection, setSelectedSection] = useState(null);
   const [sectionForm, setSectionForm] = useState({});
   const [sectionModal, setSectionModal] = useState(null);
+  const [selectedCandidates, setSelectedCandidates] = useState([]); // For multiple selection
   
   const [photoCandidate, setPhotoCandidate] = useState(null); // For photo upload modal
   const [tempPhoto, setTempPhoto] = useState(null); // For cropping preview
@@ -256,13 +257,59 @@ export default function App() {
     try {
       setLoading(true);
       await api.assignCandidateToSection(candidateId, sectionId);
+      
+      // Fetch updated candidates to get new section_ids
+      const updatedCandidates = await api.getCandidatesByProject(selectedProject.id);
+      
+      // Update selectedProject with new candidate data
+      const updatedProject = { ...selectedProject, candidates: updatedCandidates };
+      setSelectedProject(updatedProject);
+      
+      // Update projects array
+      setProjects(projects.map(p => p.id === selectedProject.id ? updatedProject : p));
+      
+      // Refresh sections list
       await fetchSections();
-      await fetchProjects();
+      
       setSectionModal(null);
       setSelectedSection(null);
+      setSelectedCandidates([]);
     } catch (error) {
       console.error('Error assigning candidate:', error);
       alert('Failed to assign candidate');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAssignMultipleCandidates = async (sectionId, candidateIds) => {
+    try {
+      setLoading(true);
+      
+      // Assign all candidates
+      await Promise.all(
+        candidateIds.map(candidateId => api.assignCandidateToSection(candidateId, sectionId))
+      );
+      
+      // Fetch updated candidates to get new section_ids
+      const updatedCandidates = await api.getCandidatesByProject(selectedProject.id);
+      
+      // Update selectedProject with new candidate data
+      const updatedProject = { ...selectedProject, candidates: updatedCandidates };
+      setSelectedProject(updatedProject);
+      
+      // Update projects array
+      setProjects(projects.map(p => p.id === selectedProject.id ? updatedProject : p));
+      
+      // Refresh sections list
+      await fetchSections();
+      
+      setSectionModal(null);
+      setSelectedSection(null);
+      setSelectedCandidates([]);
+    } catch (error) {
+      console.error('Error assigning candidates:', error);
+      alert('Failed to assign candidates');
     } finally {
       setLoading(false);
     }
@@ -274,8 +321,19 @@ export default function App() {
     try {
       setLoading(true);
       await api.unassignCandidateFromSection(candidateId, sectionId);
+      
+      // Fetch updated candidates to get new section_ids
+      const updatedCandidates = await api.getCandidatesByProject(selectedProject.id);
+      
+      // Update selectedProject with new candidate data
+      const updatedProject = { ...selectedProject, candidates: updatedCandidates };
+      setSelectedProject(updatedProject);
+      
+      // Update projects array
+      setProjects(projects.map(p => p.id === selectedProject.id ? updatedProject : p));
+      
+      // Refresh sections list
       await fetchSections();
-      await fetchProjects();
     } catch (error) {
       console.error('Error unassigning candidate:', error);
       alert('Failed to remove candidate');
@@ -2728,38 +2786,97 @@ const saveProject = async () => {
               <h3 className="text-xl font-bold">
                 Assign Candidates to "{selectedSection.name}"
               </h3>
-              <button onClick={() => { setSectionModal(null); setSelectedSection(null); }}>
+              <button onClick={() => { setSectionModal(null); setSelectedSection(null); setSelectedCandidates([]); }}>
                 <X size={20} />
               </button>
             </div>
-            <div className="space-y-2">
-              {getUnassignedCandidates(selectedSection.id).length === 0 ? (
-                <p className="text-center text-gray-500 py-8">
-                  All candidates are already assigned to this section
-                </p>
-              ) : (
-                getUnassignedCandidates(selectedSection.id).map(candidate => (
-                  <div key={candidate.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
-                    <img src={candidate.photo} alt={candidate.name} className="w-12 h-12 rounded-full object-cover" />
-                    <div className="flex-1">
-                      <p className="font-medium">{candidate.name}</p>
-                      {candidate.role && <p className="text-sm text-gray-500">{candidate.role}</p>}
-                    </div>
-                    <button
-                      onClick={() => handleAssignCandidate(selectedSection.id, candidate.id)}
-                      className="bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 text-sm"
-                      disabled={loading}
-                    >
-                      Assign
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="mt-6">
+            
+            {getUnassignedCandidates(selectedSection.id).length === 0 ? (
+              <p className="text-center text-gray-500 py-8">
+                All candidates are already assigned to this section
+              </p>
+            ) : (
+              <>
+                {/* Select All / Deselect All */}
+                <div className="flex gap-2 mb-4">
+                  <button
+                    onClick={() => {
+                      const allIds = getUnassignedCandidates(selectedSection.id).map(c => c.id);
+                      setSelectedCandidates(allIds);
+                    }}
+                    className="flex-1 px-3 py-2 border border-emerald-600 text-emerald-600 rounded-lg hover:bg-emerald-50 text-sm font-medium"
+                  >
+                    Select All
+                  </button>
+                  <button
+                    onClick={() => setSelectedCandidates([])}
+                    className="flex-1 px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 text-sm font-medium"
+                  >
+                    Deselect All
+                  </button>
+                </div>
+
+                {/* Candidates List with Checkboxes */}
+                <div className="space-y-2 mb-4">
+                  {getUnassignedCandidates(selectedSection.id).map(candidate => {
+                    const isSelected = selectedCandidates.includes(candidate.id);
+                    return (
+                      <div 
+                        key={candidate.id} 
+                        className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition ${
+                          isSelected ? 'bg-emerald-50 border-emerald-500' : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedCandidates(selectedCandidates.filter(id => id !== candidate.id));
+                          } else {
+                            setSelectedCandidates([...selectedCandidates, candidate.id]);
+                          }
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}}
+                          className="w-5 h-5 text-emerald-600 rounded cursor-pointer"
+                        />
+                        <img src={candidate.photo} alt={candidate.name} className="w-12 h-12 rounded-full object-cover" />
+                        <div className="flex-1">
+                          <p className="font-medium">{candidate.name}</p>
+                          {candidate.role && <p className="text-sm text-gray-500">{candidate.role}</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Assign Button */}
+                <button
+                  onClick={() => {
+                    if (selectedCandidates.length > 0) {
+                      handleAssignMultipleCandidates(selectedSection.id, selectedCandidates);
+                    }
+                  }}
+                  disabled={loading || selectedCandidates.length === 0}
+                  className="w-full bg-emerald-700 text-white px-4 py-3 rounded-lg hover:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Assigning...
+                    </span>
+                  ) : (
+                    `Assign ${selectedCandidates.length} Candidate${selectedCandidates.length !== 1 ? 's' : ''}`
+                  )}
+                </button>
+              </>
+            )}
+            
+            <div className="mt-4">
               <button
-                onClick={() => { setSectionModal(null); setSelectedSection(null); }}
+                onClick={() => { setSectionModal(null); setSelectedSection(null); setSelectedCandidates([]); }}
                 className="w-full border rounded-lg px-4 py-2 hover:bg-gray-50"
+                disabled={loading}
               >
                 Close
               </button>
