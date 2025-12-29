@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from database import get_db
-from models import Candidate, DailyLog, MonthlyKPI
+from models import Candidate, DailyLog, MonthlyKPI, CandidateSection
 from schemas import CandidateCreate, CandidateUpdate, CandidateResponse, CandidateReorder
 
 router = APIRouter(prefix="/api/candidates", tags=["Candidates"])
@@ -17,6 +17,12 @@ def get_candidates_by_project(project_id: int, db: Session = Depends(get_db)):
     # Transform each candidate to include daily logs and KPIs
     result = []
     for candidate in candidates:
+        # Get section assignments for this candidate
+        section_assignments = db.query(CandidateSection).filter(
+            CandidateSection.candidate_id == candidate.id
+        ).all()
+        section_ids = [cs.section_id for cs in section_assignments]
+        
         # Get daily logs
         daily_logs = db.query(DailyLog).filter(
             DailyLog.candidate_id == candidate.id
@@ -34,6 +40,7 @@ def get_candidates_by_project(project_id: int, db: Session = Depends(get_db)):
             "photo": candidate.photo,
             "role": candidate.role,
             "displayOrder": candidate.display_order,
+            "section_ids": section_ids,  # ✅ ADDED THIS
             "dailyLogs": {
                 str(log.log_date): {
                     "timeIn": str(log.time_in) if log.time_in else None,
@@ -89,6 +96,12 @@ def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
     
+    # Get section assignments for this candidate
+    section_assignments = db.query(CandidateSection).filter(
+        CandidateSection.candidate_id == candidate.id
+    ).all()
+    section_ids = [cs.section_id for cs in section_assignments]
+    
     # Get daily logs
     daily_logs = db.query(DailyLog).filter(
         DailyLog.candidate_id == candidate.id
@@ -106,6 +119,7 @@ def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
         "photo": candidate.photo,
         "role": candidate.role,
         "displayOrder": candidate.display_order,
+        "section_ids": section_ids,  # ✅ ADDED THIS
         "dailyLogs": {
             str(log.log_date): {
                 "timeIn": str(log.time_in) if log.time_in else None,
