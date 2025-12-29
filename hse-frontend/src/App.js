@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Plus, Edit2, Trash2, X, MapPin, Users, Building2, AlertTriangle, Calendar, Shield, Flame, Anchor, HardHat, ChevronRight, ChevronDown, Layers, User, CheckCircle, XCircle, Home, Activity, Camera, Upload, Search, Lock, LogOut, Eye, EyeOff, ArrowUp, ArrowDown } from 'lucide-react';
 import * as api from './api';
@@ -185,7 +185,7 @@ export default function App() {
 
   // ==================== SECTIONS FUNCTIONS ====================
   
-  const fetchSections = async () => {
+  const fetchSections = useCallback(async () => {
     if (!selectedProject?.id) return;
     try {
       const data = await api.getSectionsByProject(selectedProject.id);
@@ -193,13 +193,13 @@ export default function App() {
     } catch (error) {
       console.error('Error fetching sections:', error);
     }
-  };
+  }, [selectedProject?.id]);
 
   useEffect(() => {
     if (selectedProject?.id && projectTab === 'sections') {
       fetchSections();
     }
-  }, [selectedProject?.id, projectTab]);
+  }, [selectedProject?.id, projectTab, fetchSections]);
 
   const handleAddSection = async (e) => {
     e.preventDefault();
@@ -2732,4 +2732,4 @@ const saveProject = async () => {
 
     </div>
   );
-} 
+}
