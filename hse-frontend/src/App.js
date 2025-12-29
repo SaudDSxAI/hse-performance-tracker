@@ -959,13 +959,16 @@ const saveProject = async () => {
     };
 
     const rotation = -90 + (percentage * 1.8);
+    
+    // Generate unique ID for this gauge instance
+    const uniqueId = `gauge-${Math.random().toString(36).substr(2, 9)}`;
 
     return (
       <div className="flex flex-col items-center">
-        <div className="relative w-24 h-12">
-          <svg className="w-24 h-12" viewBox="0 0 100 50">
+        <div className="relative w-24 h-16">
+          <svg className="w-24 h-16" viewBox="0 0 100 60">
             <defs>
-              <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <linearGradient id={uniqueId} x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#EF4444" />
                 <stop offset="22.2%" stopColor="#EF4444" />
                 <stop offset="22.2%" stopColor="#F97316" />
@@ -978,15 +981,15 @@ const saveProject = async () => {
             </defs>
             {/* Single continuous arc with gradient */}
             <path 
-              d="M 5 45 A 40 40 0 0 1 95 45" 
+              d="M 5 55 A 40 40 0 0 1 95 55" 
               fill="none" 
-              stroke="url(#gaugeGradient)" 
+              stroke={`url(#${uniqueId})`}
               strokeWidth="8"
               strokeLinecap="butt"
             />
-            <line x1="50" y1="45" x2="50" y2="15" stroke={getColor()} strokeWidth="2" strokeLinecap="round"
-              style={{ transformOrigin: '50px 45px', transform: `rotate(${rotation}deg)`, transition: 'transform 0.3s ease' }} />
-            <circle cx="50" cy="45" r="3" fill={getColor()} />
+            <line x1="50" y1="55" x2="50" y2="20" stroke={getColor()} strokeWidth="2" strokeLinecap="round"
+              style={{ transformOrigin: '50px 55px', transform: `rotate(${rotation}deg)`, transition: 'transform 0.3s ease' }} />
+            <circle cx="50" cy="55" r="3" fill={getColor()} />
           </svg>
         </div>
         <div className="text-center mt-1">
@@ -1541,8 +1544,8 @@ const saveProject = async () => {
                     <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
                       {/* Big Gauge */}
                       <div className="flex flex-col items-center">
-                        <div className="relative w-40 h-20">
-                          <svg className="w-40 h-20" viewBox="0 0 100 50">
+                        <div className="relative w-40 h-24">
+                          <svg className="w-40 h-24" viewBox="0 0 100 60">
                             <defs>
                               <linearGradient id="largeGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                                 <stop offset="0%" stopColor="#EF4444" />
@@ -1557,15 +1560,15 @@ const saveProject = async () => {
                             </defs>
                             {/* Single continuous arc with gradient */}
                             <path 
-                              d="M 5 45 A 40 40 0 0 1 95 45" 
+                              d="M 5 55 A 40 40 0 0 1 95 55" 
                               fill="none" 
                               stroke="url(#largeGaugeGradient)" 
                               strokeWidth="8"
                               strokeLinecap="butt"
                             />
-                            <line x1="50" y1="45" x2="50" y2="12" stroke={getColor(stats.average)} strokeWidth="3" strokeLinecap="round"
-                              style={{ transformOrigin: '50px 45px', transform: `rotate(${-90 + (stats.average * 1.8)}deg)`, transition: 'transform 0.5s ease' }} />
-                            <circle cx="50" cy="45" r="5" fill={getColor(stats.average)} />
+                            <line x1="50" y1="55" x2="50" y2="15" stroke={getColor(stats.average)} strokeWidth="3" strokeLinecap="round"
+                              style={{ transformOrigin: '50px 55px', transform: `rotate(${-90 + (stats.average * 1.8)}deg)`, transition: 'transform 0.5s ease' }} />
+                            <circle cx="50" cy="55" r="5" fill={getColor(stats.average)} />
                           </svg>
                         </div>
                         <div className="text-center mt-2">
@@ -1690,7 +1693,7 @@ const saveProject = async () => {
                       </button>
                     </div>
                   ) : (
-                    <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                       {selectedProject.candidates
                         .filter(c => c.name.toLowerCase().includes(candidateSearch.toLowerCase()))
                         .sort((a, b) => {
@@ -1836,19 +1839,54 @@ const saveProject = async () => {
                                   </div>
                                 ) : (
                                   <>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
-                                      {sectionCandidates.map(candidate => (
-                                        <div key={candidate.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
-                                          <img src={candidate.photo} alt={candidate.name} className="w-10 h-10 rounded-full object-cover" />
-                                          <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-sm truncate">{candidate.name}</p>
-                                            {candidate.role && <p className="text-xs text-gray-500 truncate">{candidate.role}</p>}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-3">
+                                      {sectionCandidates.map(candidate => {
+                                        const performancePercentage = getOverallPerformance(candidate);
+                                        return (
+                                          <div 
+                                            key={candidate.id} 
+                                            className="border rounded-lg p-4 hover:bg-gray-50 hover:shadow-md transition cursor-pointer relative"
+                                            onClick={() => goToCandidate(candidate)}
+                                          >
+                                            {/* Remove from section button - top right */}
+                                            <button 
+                                              onClick={(e) => { e.stopPropagation(); handleUnassignCandidate(section.id, candidate.id); }} 
+                                              className="absolute top-2 right-2 p-1 hover:bg-red-50 rounded-lg text-red-500"
+                                              title="Remove from section"
+                                            >
+                                              <X size={14} />
+                                            </button>
+
+                                            {/* Photo - Centered */}
+                                            <div className="flex justify-center mb-3 mt-2">
+                                              <div 
+                                                className="relative group cursor-pointer"
+                                                onClick={(e) => { e.stopPropagation(); openPhotoModal(e, candidate); }}
+                                              >
+                                                <img src={candidate.photo} alt="" className="w-20 h-20 rounded-full object-cover border-2 border-gray-200" />
+                                                <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                  <Camera size={18} className="text-white" />
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                            {/* Name & Role - Centered */}
+                                            <div className="text-center mb-3">
+                                              <p className="font-semibold text-gray-900 text-base truncate">{candidate.name}</p>
+                                              {candidate.role && <p className="text-xs text-gray-500 truncate">{candidate.role}</p>}
+                                            </div>
+
+                                            {/* Performance Gauge - Centered */}
+                                            <div className="flex justify-center">
+                                              {Object.keys(candidate.dailyLogs || {}).length > 0 ? (
+                                                <PerformanceGauge percentage={performancePercentage} />
+                                              ) : (
+                                                <div className="text-xs text-gray-400">No data</div>
+                                              )}
+                                            </div>
                                           </div>
-                                          <button onClick={() => handleUnassignCandidate(section.id, candidate.id)} className="p-1 hover:bg-red-50 rounded text-red-500" title="Remove from section">
-                                            <X size={16} />
-                                          </button>
-                                        </div>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                     <button onClick={() => { setSelectedSection(section); setSectionModal('assign'); }} className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
                                       + Assign More Candidates
