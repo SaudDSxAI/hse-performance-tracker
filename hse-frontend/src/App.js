@@ -253,35 +253,6 @@ export default function App() {
     }
   };
 
-  const handleAssignCandidate = async (sectionId, candidateId) => {
-    try {
-      setLoading(true);
-      await api.assignCandidateToSection(candidateId, sectionId);
-      
-      // Fetch updated candidates to get new section_ids
-      const updatedCandidates = await api.getCandidatesByProject(selectedProject.id);
-      
-      // Update selectedProject with new candidate data
-      const updatedProject = { ...selectedProject, candidates: updatedCandidates };
-      setSelectedProject(updatedProject);
-      
-      // Update projects array
-      setProjects(projects.map(p => p.id === selectedProject.id ? updatedProject : p));
-      
-      // Refresh sections list
-      await fetchSections();
-      
-      setSectionModal(null);
-      setSelectedSection(null);
-      setSelectedCandidates([]);
-    } catch (error) {
-      console.error('Error assigning candidate:', error);
-      alert('Failed to assign candidate');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleAssignMultipleCandidates = async (sectionId, candidateIds) => {
     try {
       setLoading(true);
