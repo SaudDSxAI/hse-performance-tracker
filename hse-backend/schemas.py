@@ -169,3 +169,39 @@ class MonthlyActivityResponse(MonthlyActivityBase):
     
     class Config:
         from_attributes = True
+# ==================== SECTION SCHEMAS ====================
+
+class SectionBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class SectionCreate(SectionBase):
+    project_id: int
+
+class SectionUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+class SectionResponse(SectionBase):
+    id: int
+    project_id: int
+    display_order: int
+    
+    class Config:
+        from_attributes = True
+
+class SectionReorder(BaseModel):
+    section_ids: List[int]
+
+# Candidate-Section Association Schemas
+class CandidateSectionCreate(BaseModel):
+    candidate_id: int
+    section_id: int
+
+class CandidateSectionResponse(BaseModel):
+    id: int
+    candidate_id: int
+    section_id: int
+    
+    class Config:
+        from_attributes = True
