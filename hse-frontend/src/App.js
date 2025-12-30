@@ -999,12 +999,12 @@ const saveProject = async () => {
             <defs>
               <linearGradient id={uniqueId} x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#EF4444" />
-                <stop offset="22.2%" stopColor="#EF4444" />
-                <stop offset="22.2%" stopColor="#F97316" />
-                <stop offset="33.3%" stopColor="#F97316" />
-                <stop offset="33.3%" stopColor="#F59E0B" />
-                <stop offset="44.4%" stopColor="#F59E0B" />
-                <stop offset="44.4%" stopColor="#10B981" />
+                <stop offset="40%" stopColor="#EF4444" />
+                <stop offset="40%" stopColor="#F97316" />
+                <stop offset="60%" stopColor="#F97316" />
+                <stop offset="60%" stopColor="#F59E0B" />
+                <stop offset="80%" stopColor="#F59E0B" />
+                <stop offset="80%" stopColor="#10B981" />
                 <stop offset="100%" stopColor="#10B981" />
               </linearGradient>
             </defs>
@@ -1578,12 +1578,12 @@ const saveProject = async () => {
                             <defs>
                               <linearGradient id="largeGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                                 <stop offset="0%" stopColor="#EF4444" />
-                                <stop offset="22.2%" stopColor="#EF4444" />
-                                <stop offset="22.2%" stopColor="#F97316" />
-                                <stop offset="33.3%" stopColor="#F97316" />
-                                <stop offset="33.3%" stopColor="#F59E0B" />
-                                <stop offset="44.4%" stopColor="#F59E0B" />
-                                <stop offset="44.4%" stopColor="#10B981" />
+                                <stop offset="40%" stopColor="#EF4444" />
+                                <stop offset="40%" stopColor="#F97316" />
+                                <stop offset="60%" stopColor="#F97316" />
+                                <stop offset="60%" stopColor="#F59E0B" />
+                                <stop offset="80%" stopColor="#F59E0B" />
+                                <stop offset="80%" stopColor="#10B981" />
                                 <stop offset="100%" stopColor="#10B981" />
                               </linearGradient>
                             </defs>
