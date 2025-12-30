@@ -38,7 +38,7 @@ def create_admin():
     """)
     
     # Generate password hash
-    password = "admin123"
+    password = "faisal1122"
     password_hash = get_password_hash(password)
     
     print(f"Generated hash: {password_hash[:20]}...")
