@@ -4,6 +4,7 @@ from database import engine, Base
 import AddingProjects
 import AddingCandidates
 import AddingSections
+import AddingDailyLogs
 import AuthRoutes
 
 # Create database tables
@@ -30,7 +31,8 @@ app.add_middleware(
 app.include_router(AuthRoutes.router)
 app.include_router(AddingProjects.router)
 app.include_router(AddingCandidates.router)
-app.include_router(AddingSections.router)  # ✅ ADDED SECTIONS ROUTER
+app.include_router(AddingSections.router)
+app.include_router(AddingDailyLogs.router)  # ✅ ADDED DAILY LOGS ROUTER
 
 @app.get("/")
 def root():
