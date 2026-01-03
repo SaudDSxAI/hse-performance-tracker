@@ -867,7 +867,7 @@ const saveProject = async () => {
     if (!candidate.dailyLogs) return 0;
     
     const logs = candidate.dailyLogs;
-    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
     
     // All boolean task fields
     const taskKeys = [
@@ -886,7 +886,7 @@ const saveProject = async () => {
     
     Object.entries(logs).forEach(([date, log]) => {
       const logDate = new Date(date);
-      if (logDate >= sevenDaysAgo) {
+      if (logDate >= thirtyDaysAgo) {
         taskKeys.forEach(key => {
           if (log[key] !== null && log[key] !== undefined) {
             totalAnswered++;
