@@ -357,12 +357,12 @@ export default function App() {
     // Check if all tasks are empty/null
     const taskKeys = [
       'inductionsCovered', 'barcodeImplemented', 'attendanceVerified', 'taskBriefing',
-      'tbtConducted', 'violationBriefing', 'safetyObservationsRecorded', 'sorNcrClosed',
-      'mockDrillParticipated', 'campaignParticipated', 'monthlyInspectionsCompleted',
+      'tbtConducted', 'violationBriefing', 'checklistSubmitted', 'safetyObservationsRecorded', 
+      'sorNcrClosed', 'mockDrillParticipated', 'campaignParticipated', 'monthlyInspectionsCompleted',
       'nearMissReported', 'weeklyTrainingBriefed',
-      'dailyReportsFollowup', 'msraCommunicated', 'consultantResponses', 
+      'dailyReportsFollowup', 'msraCommunicated', 'consultantResponses',
       'weeklyTbtFullParticipation', 'welfareFacilitiesMonitored', 'mondayNcrShared',
-      'safetyWalksConducted', 'trainingSessionsConducted', 'barcodeSystem100', 
+      'safetyWalksConducted', 'trainingSessionsConducted', 'barcodeSystem100',
       'taskBriefingsParticipating'
     ];
     
@@ -802,6 +802,7 @@ const saveProject = async () => {
       { key: 'taskBriefing', label: 'Task Brief' },
       { key: 'tbtConducted', label: 'TBT' },
       { key: 'violationBriefing', label: 'Violations' },
+      { key: 'checklistSubmitted', label: 'Checklist' },
       { key: 'safetyObservationsRecorded', label: 'Observations' },
       { key: 'sorNcrClosed', label: 'SOR/NCR' },
       { key: 'mockDrillParticipated', label: 'Mock Drill' },
@@ -871,8 +872,8 @@ const saveProject = async () => {
     // All boolean task fields
     const taskKeys = [
       'inductionsCovered', 'barcodeImplemented', 'attendanceVerified', 'taskBriefing',
-      'tbtConducted', 'violationBriefing', 'safetyObservationsRecorded', 'sorNcrClosed',
-      'mockDrillParticipated', 'campaignParticipated', 'monthlyInspectionsCompleted',
+      'tbtConducted', 'violationBriefing', 'checklistSubmitted', 'safetyObservationsRecorded', 
+      'sorNcrClosed', 'mockDrillParticipated', 'campaignParticipated', 'monthlyInspectionsCompleted',
       'nearMissReported', 'weeklyTrainingBriefed',
       'dailyReportsFollowup', 'msraCommunicated', 'consultantResponses',
       'weeklyTbtFullParticipation', 'welfareFacilitiesMonitored', 'mondayNcrShared',
@@ -910,8 +911,8 @@ const saveProject = async () => {
     
     const taskKeys = [
       'inductionsCovered', 'barcodeImplemented', 'attendanceVerified', 'taskBriefing',
-      'tbtConducted', 'violationBriefing', 'safetyObservationsRecorded', 'sorNcrClosed',
-      'mockDrillParticipated', 'campaignParticipated', 'monthlyInspectionsCompleted',
+      'tbtConducted', 'violationBriefing', 'checklistSubmitted', 'safetyObservationsRecorded', 
+      'sorNcrClosed', 'mockDrillParticipated', 'campaignParticipated', 'monthlyInspectionsCompleted',
       'nearMissReported', 'weeklyTrainingBriefed',
       'dailyReportsFollowup', 'msraCommunicated', 'consultantResponses',
       'weeklyTbtFullParticipation', 'welfareFacilitiesMonitored', 'mondayNcrShared',
@@ -1144,6 +1145,7 @@ const saveProject = async () => {
       { key: 'taskBriefing', label: 'Task Briefing' },
       { key: 'tbtConducted', label: 'TBT Conducted' },
       { key: 'violationBriefing', label: 'Violation Briefing' },
+      { key: 'checklistSubmitted', label: 'Checklist' },
       { key: 'safetyObservationsRecorded', label: 'Safety Observations' },
       { key: 'sorNcrClosed', label: 'SOR/NCR Closed' },
       { key: 'mockDrillParticipated', label: 'Mock Drill' },
@@ -2346,7 +2348,8 @@ const saveProject = async () => {
                 { key: 'taskBriefing', label: 'Task briefing prepared & submitted this week?' },
                 { key: 'tbtConducted', label: 'Toolbox Talk conducted?' },
                 { key: 'violationBriefing', label: 'Violation briefing conducted (10 per week)?' },
-                { key: 'safetyObservationsRecorded', label: 'At least 2 safety observations recorded today?' },
+      { key: 'checklistSubmitted', label: 'Checklist' },
+      { key: 'safetyObservationsRecorded', label: 'At least 2 safety observations recorded today?' },
                 { key: 'sorNcrClosed', label: 'Closed 90% SOR/NCRs this week?' },
                 { key: 'mockDrillParticipated', label: 'Participated in mock drill this month?' },
                 { key: 'campaignParticipated', label: 'Participated in campaign this month?' },
