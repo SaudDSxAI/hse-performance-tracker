@@ -1,30 +1,48 @@
-const API_BASE = 'https://hse-backend.up.railway.app/api';
+const API_BASE = 'http://localhost:8000/api';
 
 console.log('🔧 API_BASE:', API_BASE);
 console.log('📦 API.JS VERSION: 2.0 - CONSOLIDATED ENDPOINTS');
 
 // Token management
 const getToken = () => localStorage.getItem('hse_token');
-const setToken = (token) => localStorage.setItem('hse_token', token);
+const setToken = (token) => {
+  if (token) {
+    localStorage.setItem('hse_token', token);
+  } else {
+    localStorage.removeItem('hse_token');
+  }
+};
 const removeToken = () => localStorage.removeItem('hse_token');
 const getUser = () => {
-  const user = localStorage.getItem('hse_user');
-  return user ? JSON.parse(user) : null;
+  try {
+    const user = localStorage.getItem('hse_user');
+    if (!user || user === 'undefined') return null;
+    return JSON.parse(user);
+  } catch (e) {
+    console.error('Error parsing user from localStorage', e);
+    return null;
+  }
 };
-const setUser = (user) => localStorage.setItem('hse_user', JSON.stringify(user));
+const setUser = (user) => {
+  if (user) {
+    localStorage.setItem('hse_user', JSON.stringify(user));
+  } else {
+    localStorage.removeItem('hse_user');
+  }
+};
 const removeUser = () => localStorage.removeItem('hse_user');
 
 // Helper function for fetch with error handling and logging
 const fetchAPI = async (url, options = {}, requireAuth = true) => {
   const fullURL = url.startsWith('http') ? url : `${API_BASE}${url}`;
-  
+
   console.log('🚀 Request:', options.method || 'GET', fullURL);
-  
+
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
-  
+
   // Add auth token if required and available
   if (requireAuth) {
     const token = getToken();
@@ -32,7 +50,7 @@ const fetchAPI = async (url, options = {}, requireAuth = true) => {
       headers['Authorization'] = `Bearer ${token}`;
     }
   }
-  
+
   try {
     const response = await fetch(fullURL, {
       ...options,
@@ -69,9 +87,31 @@ export const login = async (username, password) => {
     method: 'POST',
     body: JSON.stringify({ username, password }),
   }, false);
-  
+
   setToken(data.access_token);
   setUser(data.user);
+  return data;
+};
+
+export const signup = async (userData) => {
+  const data = await fetchAPI('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  }, false);
+
+  setToken(data.access_token);
+  setUser(data.user);
+  return data;
+};
+
+export const changePassword = async (currentPassword, newPassword) => {
+  const data = await fetchAPI('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword
+    }),
+  });
   return data;
 };
 
@@ -183,14 +223,14 @@ export const deleteProject = async (id) => {
 export const getCandidatesByProject = async (projectId) => {
   console.log('📥 Getting candidates for project', projectId, '(with dailyLogs & monthlyKPIs included)');
   const data = await fetchAPI(`/candidates/project/${projectId}`);
-  
+
   // Backend returns complete data structure:
   // [{
   //   id, name, photo, role, displayOrder,
   //   dailyLogs: { "2024-01-01": {...}, ... },
   //   monthlyKPIs: { observationsOpen, ... }
   // }]
-  
+
   console.log('✅ Received', data.length, 'candidates with complete data');
   return data;
 };
@@ -198,7 +238,7 @@ export const getCandidatesByProject = async (projectId) => {
 export const getCandidate = async (candidateId) => {
   console.log('📥 Getting candidate', candidateId, '(with dailyLogs & monthlyKPIs included)');
   const data = await fetchAPI(`/candidates/${candidateId}`);
-  
+
   // Backend returns complete data with dailyLogs and monthlyKPIs already included
   console.log('✅ Received candidate with complete data');
   return data;
@@ -209,7 +249,7 @@ export const createCandidate = async (candidate, projectId) => {
     method: 'POST',
     body: JSON.stringify(transformCandidateToBackend(candidate, projectId)),
   });
-  
+
   // Return with empty logs/KPIs for new candidate
   return {
     id: data.id,
@@ -235,7 +275,7 @@ export const updateCandidate = async (id, candidate, projectId) => {
     method: 'PUT',
     body: JSON.stringify(transformCandidateToBackend(candidate, projectId)),
   });
-  
+
   // Return updated candidate while preserving logs/KPIs
   return {
     id: data.id,

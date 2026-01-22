@@ -6,6 +6,8 @@ from datetime import date, time
 class UserCreate(BaseModel):
     username: str
     password: str
+    email: Optional[str] = None
+    full_name: Optional[str] = None
 
 class UserLogin(BaseModel):
     username: str
@@ -14,10 +16,16 @@ class UserLogin(BaseModel):
 class UserResponse(BaseModel):
     id: int
     username: str
+    email: Optional[str] = None
+    full_name: Optional[str] = None
     is_admin: bool
     
     class Config:
         from_attributes = True
+
+class UserChangePassword(BaseModel):
+    current_password: str
+    new_password: str
 
 class TokenResponse(BaseModel):
     access_token: str

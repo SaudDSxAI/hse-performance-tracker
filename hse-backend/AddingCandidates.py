@@ -75,13 +75,16 @@ def get_candidates_by_project(project_id: int, db: Session = Depends(get_db)):
                 for log in daily_logs
             },
             "monthlyKPIs": {
-                "observationsOpen": monthly_kpis[0].observations_open if monthly_kpis else 0,
-                "observationsClosed": monthly_kpis[0].observations_closed if monthly_kpis else 0,
-                "violations": monthly_kpis[0].violations if monthly_kpis else 0,
-                "ncrsOpen": monthly_kpis[0].ncrs_open if monthly_kpis else 0,
-                "ncrsClosed": monthly_kpis[0].ncrs_closed if monthly_kpis else 0,
-                "weeklyReportsOpen": monthly_kpis[0].weekly_reports_open if monthly_kpis else 0,
-                "weeklyReportsClosed": monthly_kpis[0].weekly_reports_closed if monthly_kpis else 0
+                str(kpi.month): {
+                    "observationsOpen": kpi.observations_open,
+                    "observationsClosed": kpi.observations_closed,
+                    "violations": kpi.violations,
+                    "ncrsOpen": kpi.ncrs_open,
+                    "ncrsClosed": kpi.ncrs_closed,
+                    "weeklyReportsOpen": kpi.weekly_reports_open,
+                    "weeklyReportsClosed": kpi.weekly_reports_closed
+                }
+                for kpi in monthly_kpis
             }
         }
         
@@ -154,13 +157,16 @@ def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
             for log in daily_logs
         },
         "monthlyKPIs": {
-            "observationsOpen": monthly_kpis[0].observations_open if monthly_kpis else 0,
-            "observationsClosed": monthly_kpis[0].observations_closed if monthly_kpis else 0,
-            "violations": monthly_kpis[0].violations if monthly_kpis else 0,
-            "ncrsOpen": monthly_kpis[0].ncrs_open if monthly_kpis else 0,
-            "ncrsClosed": monthly_kpis[0].ncrs_closed if monthly_kpis else 0,
-            "weeklyReportsOpen": monthly_kpis[0].weekly_reports_open if monthly_kpis else 0,
-            "weeklyReportsClosed": monthly_kpis[0].weekly_reports_closed if monthly_kpis else 0
+            str(kpi.month): {
+                "observationsOpen": kpi.observations_open,
+                "observationsClosed": kpi.observations_closed,
+                "violations": kpi.violations,
+                "ncrsOpen": kpi.ncrs_open,
+                "ncrsClosed": kpi.ncrs_closed,
+                "weeklyReportsOpen": kpi.weekly_reports_open,
+                "weeklyReportsClosed": kpi.weekly_reports_closed
+            }
+            for kpi in monthly_kpis
         }
     }
     

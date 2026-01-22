@@ -1,3 +1,43 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Mode */
+    --color-primary: #2C3E50;
+    --color-bg: #F8F9FA;
+    --color-surface: #FFFFFF;
+    --color-text-main: #1F2937;
+    --color-text-body: #64748B;
+
+    /* Semantic Light */
+    --color-success: #0D9488;
+    --color-success-bg: #F0FDFA;
+    --color-warning: #F59E0B;
+    --color-warning-bg: #FFFBEB;
+    --color-error: #DC2626;
+    --color-error-bg: #FEF2F2;
+  }
+
+  .dark {
+    /* Dark Mode */
+    --color-primary: #3B82F6;
+    --color-bg: #0A0E1A;
+    --color-surface: #1A1F2E;
+    --color-text-main: #FFFFFF;
+    --color-text-body: #D1D5DB;
+
+    /* Semantic Dark */
+    --color-success: #14B8A6;
+    --color-success-bg: #1A1F2E;
+    --color-warning: #FBbf24;
+    --color-warning-bg: #1A1F2E;
+    --color-error: #EF4444;
+    --color-error-bg: #1A1F2E;
+  }
+}
+
+body {
+  @apply bg-background text-text-main transition-colors duration-200;
+}
