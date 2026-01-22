@@ -7,7 +7,15 @@ import AddingSections
 import AddingDailyLogs
 import AuthRoutes
 
-# Create database tables
+from migrate_db import migrate
+
+# Run migrations for existing tables
+try:
+    migrate()
+except Exception as e:
+    print(f"Migration warning: {e}")
+
+# Create new database tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
