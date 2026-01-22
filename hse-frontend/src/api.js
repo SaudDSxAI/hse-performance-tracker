@@ -1,4 +1,6 @@
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:8000/api'
+  : 'https://hse-backend.up.railway.app/api';
 
 console.log('🔧 API_BASE:', API_BASE);
 console.log('📦 API.JS VERSION: 2.0 - CONSOLIDATED ENDPOINTS');
