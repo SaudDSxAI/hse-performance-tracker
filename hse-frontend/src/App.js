@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Plus, Edit2, Trash2, X, MapPin, Users, Building2, AlertTriangle, Calendar, Shield, Flame, Anchor, HardHat, ChevronRight, ChevronDown, Layers, User, CheckCircle, XCircle, Home, Activity, Camera, Upload, Search, Lock, LogOut, Eye, EyeOff, ArrowUp, ArrowDown, UserPlus, Check, Moon, Sun } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Users, Building2, Calendar, Shield, ChevronRight, ChevronDown, Layers, User, CheckCircle, XCircle, Activity, Camera, Search, Eye, EyeOff } from 'lucide-react';
 import * as api from './api';
 
 // Import extracted components
-import { Navbar, Breadcrumb, PerformanceGauge, LoadingSpinner, EmptyState } from './components/common';
+import { Navbar, Breadcrumb, PerformanceGauge, LoadingSpinner } from './components/common';
 import { ProjectCard, CandidateCard } from './components/dashboard';
 import { DailyLogModal, CandidateModal, DeleteConfirmModal, SectionModal, AssignCandidateModal, KpiModal, PhotoModal, ProjectModal, SettingsModal } from './components/modals';
 import { LoginPage } from './views';
