@@ -1070,7 +1070,7 @@ export default function App() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background text-text-main transition-colors duration-200">
       <Navbar
         currentUser={currentUser}
         darkMode={darkMode}
@@ -1085,8 +1085,8 @@ export default function App() {
         {view === 'home' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold">Projects</h1>
-              <button onClick={() => { setForm({ highRisk: [] }); setModal('project'); }} className="flex items-center gap-2 bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800">
+              <h1 className="text-2xl font-bold text-text-main">Projects</h1>
+              <button onClick={() => { setForm({ highRisk: [] }); setModal('project'); }} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90 transition-all shadow-lg shadow-primary/20">
                 <Plus size={20} />Add Project
               </button>
             </div>
@@ -1342,7 +1342,7 @@ export default function App() {
                           className="pl-9 pr-3 py-2 border rounded-lg text-sm w-full sm:w-48"
                         />
                       </div>
-                      <button onClick={() => { setForm({}); setModal('candidate'); }} className="flex items-center gap-2 bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 text-sm whitespace-nowrap">
+                      <button onClick={() => { setForm({}); setModal('candidate'); }} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90 transition-all text-sm whitespace-nowrap shadow-md shadow-primary/20">
                         <Plus size={16} />Add
                       </button>
                     </div>
