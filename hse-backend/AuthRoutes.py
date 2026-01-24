@@ -85,11 +85,20 @@ def register(request: Request, user: schemas.UserCreate, db: Session = Depends(g
 @router.post("/login", response_model=schemas.TokenResponse)
 @limiter.limit("10/minute")
 def login(request: Request, credentials: schemas.UserLogin, db: Session = Depends(get_db)):
-    user = authenticate_user(db, credentials.username, credentials.password)
+    # Debug: Check user existence first
+    user = db.query(models.User).filter(models.User.username == credentials.username).first()
+    
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail=f"Debug: User '{credentials.username}' not found in DB",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
+    if not authenticate_user(db, credentials.username, credentials.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Debug: Password mismatch for existing user",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
