@@ -145,12 +145,6 @@ export default function App() {
     }
   }, [selectedProject, selectedCandidate, view]);
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetchProjects();
-      fetchTeam();
-    }
-  }, [isLoggedIn, fetchProjects, fetchTeam]);
 
   const fetchSections = useCallback(async () => {
     if (!selectedProject?.id) return;
@@ -161,6 +155,13 @@ export default function App() {
       console.error('Error fetching sections:', error);
     }
   }, [selectedProject?.id]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchProjects();
+      fetchTeam();
+    }
+  }, [isLoggedIn, fetchProjects, fetchTeam]);
 
   useEffect(() => {
     if (selectedProject?.id && projectTab === 'sections') {
