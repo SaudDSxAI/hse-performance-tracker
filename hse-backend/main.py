@@ -62,4 +62,4 @@ def root():
         "message": "HSE Performance Tracker API",
         "version": "1.0.0",
         "status": "active"
-    }
+    } 
