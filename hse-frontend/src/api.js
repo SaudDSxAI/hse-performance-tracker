@@ -70,9 +70,17 @@ const fetchAPI = async (url, options = {}, requireAuth = true) => {
     }
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Error response:', errorText);
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      let errorMsg = `HTTP ${response.status}`;
+      try {
+        const errData = await response.json();
+        errorMsg = errData.detail || errorMsg;
+      } catch (e) {
+        // Fallback if not JSON
+        const text = await response.text();
+        errorMsg = text || errorMsg;
+      }
+      console.error('❌ Error response:', errorMsg);
+      throw new Error(errorMsg);
     }
 
     return response.json();

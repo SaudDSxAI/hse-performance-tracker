@@ -84,7 +84,7 @@ export default function App() {
       setIsLoggedIn(true);
       setCurrentUser(data.user);
     } catch (error) {
-      setLoginError('Invalid username or password');
+      setLoginError(error.message || 'Invalid username or password');
     } finally {
       setLoading(false);
     }
