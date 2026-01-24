@@ -66,13 +66,6 @@ export default function App() {
     return '#BAE6FD'; // Pale Sky Blue (Poor)
   };
 
-  // Effects
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetchProjects();
-      fetchTeam();
-    }
-  }, [isLoggedIn, fetchProjects, fetchTeam]);
 
   const fetchTeam = useCallback(async () => {
     try {
@@ -151,6 +144,13 @@ export default function App() {
       setLoading(false);
     }
   }, [selectedProject, selectedCandidate, view]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchProjects();
+      fetchTeam();
+    }
+  }, [isLoggedIn, fetchProjects, fetchTeam]);
 
   const fetchSections = useCallback(async () => {
     if (!selectedProject?.id) return;
