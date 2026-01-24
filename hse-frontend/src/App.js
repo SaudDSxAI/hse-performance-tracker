@@ -467,7 +467,7 @@ export default function App() {
         }
       }
     }
-  }, [selectedDate, selectedCandidate?.id, view]);
+  }, [selectedDate, selectedCandidate, view, modal]);
 
   const goToCandidate = (c) => {
     setSelectedCandidate(c);
