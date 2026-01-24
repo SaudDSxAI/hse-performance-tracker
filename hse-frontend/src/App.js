@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Plus, Edit2, Trash2, X, Users, Building2, Calendar, Shield, ChevronRight, ChevronDown, Layers, User, Activity, Camera, Search, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, ChevronRight, ChevronDown, Layers, Search, CheckCircle, XCircle } from 'lucide-react';
 import * as api from './api';
 
 // Import extracted components
@@ -37,11 +37,6 @@ export default function App() {
   const [darkMode, setDarkMode] = useDarkMode();
   const [showSettings, setShowSettings] = useState(false);
 
-  // Filters & Ranges
-  const [chartDateRange, setChartDateRange] = useState({
-    from: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
-    to: new Date().toISOString().split('T')[0]
-  });
   const [projectChartRange, setProjectChartRange] = useState({
     from: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
     to: new Date().toISOString().split('T')[0]
@@ -77,16 +72,16 @@ export default function App() {
       fetchProjects();
       fetchTeam();
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, fetchProjects, fetchTeam]);
 
-  const fetchTeam = async () => {
+  const fetchTeam = useCallback(async () => {
     try {
       const data = await api.getUsers();
       setTeamMembers(data);
     } catch (error) {
       console.error('Error fetching team:', error);
     }
-  };
+  }, []);
 
   const handleLogin = async (username, password) => {
     setLoginError('');
@@ -124,7 +119,7 @@ export default function App() {
     setView('home');
   };
 
-  const fetchProjects = async (keepSelection = false) => {
+  const fetchProjects = useCallback(async (keepSelection = false) => {
     try {
       setLoading(true);
       const data = await api.getProjects();
@@ -146,7 +141,8 @@ export default function App() {
             if (updatedCandidate) setSelectedCandidate(updatedCandidate);
           }
         } else if (view === 'project') {
-          goHome();
+          setView('home');
+          setSelectedProject(null);
         }
       }
     } catch (error) {
@@ -154,7 +150,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedProject, selectedCandidate, view]);
 
   const fetchSections = useCallback(async () => {
     if (!selectedProject?.id) return;
@@ -308,7 +304,6 @@ export default function App() {
     }
   };
 
-  const openPhotoModal = (e, c) => { e.stopPropagation(); setPhotoCandidate(c); };
 
   // Helper Stats
   const getOverallPerformance = (candidate) => {
@@ -374,7 +369,6 @@ export default function App() {
 
   // Section specific
   const getSectionCandidates = (sid) => (selectedProject?.candidates || []).filter(c => c.section_ids?.includes(sid));
-  const getUnassignedCandidates = (sid) => (selectedProject?.candidates || []).filter(c => !c.section_ids?.includes(sid));
   const toggleSectionVisibility = (sid) => setHiddenSections(p => {
     const ns = new Set(p);
     if (ns.has(sid)) ns.delete(sid); else ns.add(sid);
@@ -461,7 +455,7 @@ export default function App() {
         setModal('dailyLog');
       }
     }
-  }, [selectedDate, selectedCandidate?.id, view, modal]);
+  }, [selectedDate, selectedCandidate, view, modal]);
 
   const goToCandidate = (c) => {
     setSelectedCandidate(c);
@@ -777,7 +771,7 @@ export default function App() {
             />
             <div className="bg-surface rounded-xl border p-6 flex flex-col md:flex-row gap-8">
               <div className="flex flex-col items-center gap-4">
-                <img src={selectedCandidate.photo} className="w-32 h-32 rounded-full border-4 border-background shadow-lg" />
+                <img src={selectedCandidate.photo} alt={selectedCandidate.name} className="w-32 h-32 rounded-full border-4 border-background shadow-lg" />
                 <div className="text-center">
                   <h1 className="text-2xl font-bold">{selectedCandidate.name}</h1>
                   <p className="text-xs font-bold uppercase opacity-50">{selectedCandidate.role}</p>

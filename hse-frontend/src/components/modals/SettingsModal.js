@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Lock, ShieldCheck, AlertCircle, CheckCircle2, Users, UserPlus, Trash2, Shield, User, Download, Key, Palette } from 'lucide-react';
+import { X, AlertCircle, CheckCircle2, Users, UserPlus, Trash2, Shield, User, Download, Key } from 'lucide-react';
 import { changePassword, getUsers, inviteUser, deleteUser, updateUserRole, exportData, getProjects, updateUserAssignments } from '../../api';
 
 export const SettingsModal = ({ isOpen, onClose, currentUser, projects = [], onRefresh }) => {
