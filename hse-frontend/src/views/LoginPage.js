@@ -1,7 +1,55 @@
+import React, { useState } from 'react';
 import { Shield, Eye, EyeOff, User, Mail, Lock, ArrowRight, CheckCircle2, Building2 } from 'lucide-react';
 
 export const LoginPage = ({ onLogin, onSignup, loading, error }) => {
-    // ... (rest of code) ...
+    const [mode, setMode] = useState('login'); // 'login' or 'signup'
+    const [form, setForm] = useState({
+        username: '',
+        password: '',
+        email: '',
+        fullName: '',
+        companyName: '' // Added for SaaS
+    });
+    const [showPassword, setShowPassword] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (mode === 'login') {
+            await onLogin(form.username, form.password);
+        } else {
+            await onSignup({
+                username: form.username,
+                password: form.password,
+                email: form.email,
+                full_name: form.fullName,
+                company_name: form.companyName
+            });
+        }
+    };
+
+    const toggleMode = () => {
+        setMode(mode === 'login' ? 'signup' : 'login');
+        setForm({ username: '', password: '', email: '', fullName: '', companyName: '' });
+    };
+
+    return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+            {/* Background Decorative Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary rounded-full blur-[120px]"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary rounded-full blur-[120px]"></div>
+            </div>
+
+            <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-[440px] p-8 border border-border relative z-10">
+                <div className="text-center mb-10">
+                    <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-primary/40 rotate-3">
+                        <Shield className="text-white" size={32} />
+                    </div>
+                    <h1 className="text-4xl font-black text-text-main tracking-tight">HSE DASHBOARD</h1>
+                    <p className="text-text-body mt-2 font-bold uppercase tracking-widest text-[10px] opacity-60">
+                        {mode === 'login' ? 'Secure Access Portal' : 'Create Management Account'}
+                    </p>
+                </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {mode === 'signup' && (
@@ -115,8 +163,7 @@ export const LoginPage = ({ onLogin, onSignup, loading, error }) => {
                     <CheckCircle2 size={12} className="text-success" />
                     <span className="text-[10px] font-black uppercase tracking-tighter">Encrypted Connection</span>
                 </div>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 };
-

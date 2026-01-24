@@ -2,10 +2,10 @@ import React from 'react';
 
 export const PerformanceGauge = ({ percentage }) => {
     const getColor = () => {
-        if (percentage >= 80) return '#10B981'; // Emerald 500
-        if (percentage >= 60) return '#3B82F6'; // Blue 500 (Cleaner than amber)
-        if (percentage >= 40) return '#F59E0B'; // Amber 500
-        return '#EF4444'; // Red 500
+        if (percentage >= 80) return '#0284C7'; // Darker Sky Blue
+        if (percentage >= 60) return '#0EA5E9'; // Main Sky Blue
+        if (percentage >= 40) return '#7DD3FC'; // Light Sky Blue
+        return '#BAE6FD'; // Pale Sky Blue
     };
 
     const getLabel = () => {
@@ -26,10 +26,10 @@ export const PerformanceGauge = ({ percentage }) => {
                 <svg className="w-full h-full drop-shadow-sm" viewBox="0 -5 100 70">
                     <defs>
                         <linearGradient id={uniqueId} x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#EF4444" stopOpacity="0.8" />
-                            <stop offset="33%" stopColor="#F59E0B" stopOpacity="0.8" />
-                            <stop offset="66%" stopColor="#3B82F6" stopOpacity="0.8" />
-                            <stop offset="100%" stopColor="#10B981" stopOpacity="0.8" />
+                            <stop offset="0%" stopColor="#BAE6FD" stopOpacity="0.8" />
+                            <stop offset="33%" stopColor="#7DD3FC" stopOpacity="0.8" />
+                            <stop offset="66%" stopColor="#0EA5E9" stopOpacity="0.8" />
+                            <stop offset="100%" stopColor="#0284C7" stopOpacity="0.8" />
                         </linearGradient>
                         <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
                             <feGaussianBlur stdDeviation="1.5" result="blur" />

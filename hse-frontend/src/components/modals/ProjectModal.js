@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Camera, Upload, CheckCircle, Lock } from 'lucide-react';
+import { X, Camera, Upload, CheckCircle, Lock, Users } from 'lucide-react';
 import { riskOptions } from '../../utils/constants';
 
 export const ProjectModal = ({
@@ -8,8 +8,11 @@ export const ProjectModal = ({
     form,
     setForm,
     onSave,
-    loading
+    loading,
+    teamMembers = [],
+    currentUser
 }) => {
+    const isAdmin = currentUser?.role === 'admin';
     const [hseLeadTempPhoto, setHseLeadTempPhoto] = useState(null);
     const [hseLeadCropPosition, setHseLeadCropPosition] = useState({ x: 0, y: 0, scale: 1 });
     const [showHseLeadPhotoCrop, setShowHseLeadPhotoCrop] = useState(false);
@@ -22,6 +25,11 @@ export const ProjectModal = ({
     const toggleRisk = (risk) => {
         const current = form.highRisk || [];
         setForm({ ...form, highRisk: current.includes(risk) ? current.filter(r => r !== risk) : [...current, risk] });
+    };
+
+    const toggleLead = (userId) => {
+        const current = form.assignedLeadIds || [];
+        setForm({ ...form, assignedLeadIds: current.includes(userId) ? current.filter(id => id !== userId) : [...current, userId] });
     };
 
     const handleHseLeadPhotoSelect = (event) => {
@@ -134,12 +142,12 @@ export const ProjectModal = ({
                                 <div className="flex items-center gap-4">
                                     <div className="relative">
                                         <img
-                                            src={form.hseLeadPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(form.hseLeadName || 'HSE')}&size=150&background=047857&color=fff`}
+                                            src={form.hseLeadPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(form.hseLeadName || 'HSE')}&size=150&background=1e3a8a&color=fff`}
                                             alt="HSE Lead"
                                             className="w-20 h-20 rounded-full object-cover border-4 border-surface shadow-md"
                                         />
                                         {form.hseLeadPhoto && form.hseLeadPhoto.startsWith('data:') && (
-                                            <div className="absolute -bottom-1 -right-1 bg-success rounded-full p-1 border-2 border-surface shadow-sm">
+                                            <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1 border-2 border-surface shadow-sm">
                                                 <CheckCircle size={14} className="text-white" />
                                             </div>
                                         )}
@@ -276,12 +284,49 @@ export const ProjectModal = ({
                         </div>
                     </div>
 
+                    {isAdmin && (
+                        <div>
+                            <label className="block text-sm font-medium text-text-main mb-2 flex items-center gap-2">
+                                <Users size={16} />
+                                Assign Access Control
+                            </label>
+                            <div className="bg-background rounded-xl border border-border p-3 space-y-2">
+                                {teamMembers.filter(u => u.role !== 'admin').length === 0 ? (
+                                    <p className="text-[10px] text-text-body/50 text-center py-2 uppercase font-black tracking-widest">No team members to assign</p>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {teamMembers.filter(u => u.role !== 'admin').map(user => (
+                                            <button
+                                                key={user.id}
+                                                type="button"
+                                                onClick={() => toggleLead(user.id)}
+                                                className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all ${(form.assignedLeadIds || []).includes(user.id)
+                                                    ? 'bg-primary/5 border-primary text-primary'
+                                                    : 'bg-surface border-border/50 text-text-body hover:border-border'
+                                                    }`}
+                                            >
+                                                <div className="w-6 h-6 rounded-full bg-background flex items-center justify-center text-[10px] font-bold border shrink-0">
+                                                    {user.username[0].toUpperCase()}
+                                                </div>
+                                                <div className="truncate">
+                                                    <p className="text-[10px] font-bold leading-none">{user.full_name || user.username}</p>
+                                                    <p className="text-[8px] opacity-50 uppercase font-black">{user.role}</p>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-[10px] text-text-body/60 mt-2 font-medium">Selected Leads will be able to see and manage this specific project.</p>
+                        </div>
+                    )}
+
                     <div>
                         <label className="block text-sm font-medium text-text-main mb-1 flex items-center gap-2">
                             <Lock size={16} />
                             Delete Protection PIN
                             {form.id && form.deletePin && (
-                                <span className="text-xs bg-success-bg text-success px-2 py-0.5 rounded-full font-bold">PIN Set</span>
+                                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">PIN Set</span>
                             )}
                         </label>
                         <div className="relative">

@@ -24,7 +24,51 @@ def run_step(sql, description):
                 print(f"❌ Error: {e}")
 
 def migrate():
-    print("Starting migration...")
+    print("Starting SaaS migration...")
+
+    # 1. Create Organization Table
+    run_step("""
+        CREATE TABLE IF NOT EXISTS organizations (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR UNIQUE NOT NULL
+        );
+    """, "Create organizations table")
+
+    # 2. Add Organization ID to Users
+    run_step("ALTER TABLE users ADD COLUMN organization_id INTEGER REFERENCES organizations(id);", "Add organization_id to users")
+
+    # 3. Add Organization ID to Projects
+    run_step("ALTER TABLE projects ADD COLUMN organization_id INTEGER REFERENCES organizations(id);", "Add organization_id to projects")
+
+    # 4. Data Migration: Create Default Org for existing data
+    run_step("""
+        INSERT INTO organizations (name) 
+        VALUES ('Default Company') 
+        ON CONFLICT (name) DO NOTHING;
+    """, "Create Default Organization")
+
+    # 5. Assign existing Users to Default Org
+    run_step("""
+        UPDATE users 
+        SET organization_id = (SELECT id FROM organizations WHERE name = 'Default Company') 
+        WHERE organization_id IS NULL;
+    """, "Migrate Users to Default Org")
+
+    # 6. Assign existing Projects to Default Org
+    run_step("""
+        UPDATE projects 
+        SET organization_id = (SELECT id FROM organizations WHERE name = 'Default Company') 
+        WHERE organization_id IS NULL;
+    """, "Migrate Projects to Default Org")
+    
+    # ----------------------------------------------------
+    # Previous Migrations (Legacy)
+    # ----------------------------------------------------
+
+    # User columns
+    run_step("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'viewer';", "Add role to users")
+    run_step("UPDATE users SET role = 'admin' WHERE is_admin = True;", "Set existing admins role")
+
     
     # User columns
     run_step("ALTER TABLE users ADD COLUMN email VARCHAR;", "Add email to users")

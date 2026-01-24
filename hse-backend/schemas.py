@@ -8,6 +8,7 @@ class UserCreate(BaseModel):
     password: str
     email: Optional[str] = None
     full_name: Optional[str] = None
+    company_name: str # Added for SaaS Registration
 
 class UserLogin(BaseModel):
     username: str
@@ -19,9 +20,12 @@ class UserResponse(BaseModel):
     email: Optional[str] = None
     full_name: Optional[str] = None
     is_admin: bool
+    role: str # Phase 5: admin, lead, viewer
+    organization_id: Optional[int] = None
     
     class Config:
         from_attributes = True
+
 
 class UserChangePassword(BaseModel):
     current_password: str
@@ -35,6 +39,10 @@ class TokenResponse(BaseModel):
 class DeleteVerify(BaseModel):
     pin: str
 
+class UserRoleUpdate(BaseModel):
+    role: str  # admin, lead, or viewer
+
+
 # Project Schemas
 class ProjectBase(BaseModel):
     name: str
@@ -47,15 +55,27 @@ class ProjectBase(BaseModel):
     new_inductions: int = 0
     high_risk: List[str] = []
     delete_pin: Optional[str] = None
+    assigned_lead_ids: Optional[List[int]] = []
 
 class ProjectCreate(ProjectBase):
     pass
 
 class ProjectUpdate(ProjectBase):
     name: Optional[str] = None
+    location: Optional[str] = None
+    company: Optional[str] = None
+    hse_lead_name: Optional[str] = None
+    hse_lead_photo: Optional[str] = None
+    manpower: Optional[int] = None
+    man_hours: Optional[int] = None
+    new_inductions: Optional[int] = None
+    high_risk: Optional[List[str]] = None
+    delete_pin: Optional[str] = None
+    assigned_lead_ids: Optional[List[int]] = None
 
 class ProjectResponse(ProjectBase):
     id: int
+    assigned_leads: List[UserResponse] = []
     
     class Config:
         from_attributes = True

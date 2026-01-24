@@ -4,37 +4,97 @@
 
 @layer base {
   :root {
-    /* Light Mode */
-    --color-primary: #2C3E50;
-    --color-bg: #F8F9FA;
-    --color-surface: #FFFFFF;
-    --color-text-main: #1F2937;
-    --color-text-body: #64748B;
+    /* --- LIGHT MODE: SKY BLUE RESET --- */
 
-    /* Semantic Light */
-    --color-success: #0D9488;
-    --color-success-bg: #F0FDFA;
-    --color-warning: #F59E0B;
-    --color-warning-bg: #FFFBEB;
-    --color-error: #DC2626;
-    --color-error-bg: #FEF2F2;
+    /* Global / Theme */
+    --color-primary: #0EA5E9;
+    /* Sky Blue Primary */
+    --color-focus: #7DD3FC;
+    /* Light Sky Focus */
+    --color-primary-active: #0284C7;
+    /* Darker Sky Active */
+    --color-bg: #F0F9FF;
+    /* Pale Sky Background */
+    --color-surface: #FFFFFF;
+    --color-text-main: #0C4A6E;
+    /* Deep Navy Text */
+    --color-text-body: #334155;
+    /* Slate Body Text */
+
+    /* Semantic / Status */
+    --color-success: #059669;
+    --color-success-bg: #ECFDF5;
+    --color-warning: #E2CD61;
+    --color-warning-bg: #FEFCE8;
+    --color-error: #EA6B6B;
+    --color-error-bg: #FEF6F6;
+
+    /* Dashboard & Cards */
+    --color-card-border: #E0F2FE;
+    --color-card-shadow: rgba(14, 165, 233, 0.1);
+
+    /* Project View */
+    --color-breadcrumb-sep: #7DD3FC;
+    --color-tab-inactive: #94A3B8;
+    --color-candidate-border: #F1F5F9;
+    --color-section-header: #0EA5E9;
+    --color-add-section: #E0F2FE;
+
+    /* Candidate Analysis */
+    --color-grid-lines: #E0F2FE;
+    --color-checkbox-off: #CBD5E1;
+    --color-kpi-bg: #F0F9FF;
+    --color-kpi-border: #E0F2FE;
+
+    /* Modals & Forms */
+    --color-modal-overlay: rgba(12, 74, 110, 0.4);
+    --color-input-border: #BAE6FD;
+    --color-placeholder: #94A3B8;
   }
 
   .dark {
-    /* Dark Mode */
-    --color-primary: #3B82F6;
-    --color-bg: #0A0E1A;
-    --color-surface: #1A1F2E;
-    --color-text-main: #FFFFFF;
-    --color-text-body: #D1D5DB;
+    /* --- DARK MODE: SKY BLUE RESET --- */
 
-    /* Semantic Dark */
-    --color-success: #14B8A6;
-    --color-success-bg: #1A1F2E;
-    --color-warning: #FBbf24;
-    --color-warning-bg: #1A1F2E;
-    --color-error: #EF4444;
-    --color-error-bg: #1A1F2E;
+    /* Global / Theme */
+    --color-primary: #0EA5E9;
+    --color-focus: #38BDF8;
+    --color-primary-active: #0EA5E9;
+    --color-bg: #020617;
+    /* Deep Night Background */
+    --color-surface: #0F172A;
+    /* Slate Surface */
+    --color-text-main: #F8FAFC;
+    --color-text-body: #94A3B8;
+
+    /* Semantic / Status */
+    --color-success: #10B981;
+    --color-success-bg: #0F172A;
+    --color-warning: #E2CD61;
+    --color-warning-bg: #0F172A;
+    --color-error: #EA6B6B;
+    --color-error-bg: #0F172A;
+
+    /* Dashboard & Cards */
+    --color-card-border: #1E293B;
+    --color-card-shadow: rgba(0, 0, 0, 0.4);
+
+    /* Project View */
+    --color-breadcrumb-sep: #64748B;
+    --color-tab-inactive: #475569;
+    --color-candidate-border: #1E293B;
+    --color-section-header: #38BDF8;
+    --color-add-section: #0F172A;
+
+    /* Candidate Analysis */
+    --color-grid-lines: #1E293B;
+    --color-checkbox-off: #475569;
+    --color-kpi-bg: #020617;
+    --color-kpi-border: #1E293B;
+
+    /* Modals & Forms */
+    --color-modal-overlay: rgba(0, 0, 0, 0.75);
+    --color-input-border: #334155;
+    --color-placeholder: #64748B;
   }
 }
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, CheckCircle, XCircle } from 'lucide-react';
+import { dailyLogTaskFields } from '../../utils/constants';
 
 export const DailyLogModal = ({
     isOpen,
@@ -12,32 +13,7 @@ export const DailyLogModal = ({
 }) => {
     if (!isOpen) return null;
 
-    const logItems = [
-        { key: 'inductionsCovered', label: 'New inductions covered this week?' },
-        { key: 'barcodeImplemented', label: 'Barcode implemented 100%?' },
-        { key: 'attendanceVerified', label: 'Time IN/OUT verified?' },
-        { key: 'taskBriefing', label: 'Task briefing prepared & submitted this week?' },
-        { key: 'tbtConducted', label: 'Toolbox Talk conducted?' },
-        { key: 'violationBriefing', label: 'Violation briefing conducted (10 per week)?' },
-        { key: 'checklistSubmitted', label: 'Checklist' },
-        { key: 'safetyObservationsRecorded', label: 'At least 2 safety observations recorded today?' },
-        { key: 'sorNcrClosed', label: 'Closed 90% SOR/NCRs this week?' },
-        { key: 'mockDrillParticipated', label: 'Participated in mock drill this month?' },
-        { key: 'campaignParticipated', label: 'Participated in campaign this month?' },
-        { key: 'monthlyInspectionsCompleted', label: 'Monthly inspections 100% completed?' },
-        { key: 'nearMissReported', label: 'Near miss reported this month?' },
-        { key: 'weeklyTrainingBriefed', label: 'Weekly training briefed to supervisors/workers?' },
-        { key: 'dailyReportsFollowup', label: 'Daily reports follow-up & coordination done from the team?' },
-        { key: 'msraCommunicated', label: 'MSRA communicated to all key personnel prior to commencement?' },
-        { key: 'consultantResponses', label: 'Immediate responses provided to the Consultant in WhatsApp?' },
-        { key: 'weeklyTbtFullParticipation', label: 'Weekly mass TBT conducted for entire workforce with full participation?' },
-        { key: 'welfareFacilitiesMonitored', label: 'Workforce welfare facilities (rest areas, toilets, water) monitored?' },
-        { key: 'mondayNcrShared', label: 'Monday shared all pending NCRs/SORs, Weekly/ESLT report & follow up?' },
-        { key: 'safetyWalksConducted', label: 'HSE Engineers performed two site safety walks daily (7:00 AM & 2:00 PM)?' },
-        { key: 'trainingSessionsConducted', label: 'Engineers conducted minimum two (2) HSE training sessions per month?' },
-        { key: 'barcodeSystem100', label: 'Bar Code system implemented 100% for Plant/Equipment/PTW?' },
-        { key: 'taskBriefingsParticipating', label: 'Engineers participating in task briefings & verifying?' }
-    ];
+    const logItems = dailyLogTaskFields;
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -78,8 +54,8 @@ export const DailyLogModal = ({
                                     type="button"
                                     onClick={() => setForm({ ...form, [item.key]: true })}
                                     className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${form[item.key] === true
-                                        ? 'bg-success text-white shadow-lg shadow-success/20'
-                                        : 'bg-surface text-text-body hover:bg-success/10 border border-border'
+                                        ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                                        : 'bg-surface text-text-body hover:bg-primary/10 border border-border'
                                         }`}
                                 >
                                     <CheckCircle size={16} />

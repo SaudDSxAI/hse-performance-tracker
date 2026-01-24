@@ -69,6 +69,9 @@ def get_current_user(
     
     return user
 
+# Alias or active check for future implementation
+get_current_active_user = get_current_user
+
 def authenticate_user(db: Session, username: str, password: str) -> Optional[models.User]:
     user = db.query(models.User).filter(models.User.username == username).first()
     if not user:

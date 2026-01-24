@@ -2,14 +2,37 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from database import get_db
-from models import Candidate, DailyLog, MonthlyKPI, CandidateSection
+from models import Candidate, DailyLog, MonthlyKPI, CandidateSection, Project, User
 from schemas import CandidateCreate, CandidateUpdate, CandidateResponse, CandidateReorder
+from auth import get_current_active_user
 
 router = APIRouter(prefix="/api/candidates", tags=["Candidates"])
 
+def verify_project_access(project_id: int, user: User, db: Session):
+    """Helper to ensure user owns project and is assigned if not admin"""
+    query = db.query(Project).filter(
+        Project.id == project_id, 
+        Project.organization_id == user.organization_id
+    )
+    
+    # Non-admins must be assigned to the project
+    if user.role != "admin":
+        query = query.filter(Project.assigned_leads.any(User.id == user.id))
+        
+    project = query.first()
+    if not project:
+        raise HTTPException(status_code=403, detail="Not authorized to access this project")
+    return project
+
 @router.get("/project/{project_id}")
-def get_candidates_by_project(project_id: int, db: Session = Depends(get_db)):
+def get_candidates_by_project(
+    project_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
     """Get all candidates for a specific project with their daily logs and KPIs"""
+    verify_project_access(project_id, current_user, db)
+
     candidates = db.query(Candidate).filter(
         Candidate.project_id == project_id
     ).order_by(Candidate.display_order).all()
@@ -93,11 +116,18 @@ def get_candidates_by_project(project_id: int, db: Session = Depends(get_db)):
     return result
 
 @router.get("/{candidate_id}")
-def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
+def get_candidate(
+    candidate_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
     """Get a specific candidate by ID with daily logs and KPIs"""
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
+        
+    # Security: Verify project ownership
+    verify_project_access(candidate.project_id, current_user, db)
     
     # Get section assignments for this candidate
     section_assignments = db.query(CandidateSection).filter(
@@ -172,9 +202,16 @@ def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
     
     return candidate_data
 
-@router.post("/", response_model=CandidateResponse)
-def create_candidate(candidate: CandidateCreate, db: Session = Depends(get_db)):
+@router.post("", response_model=CandidateResponse)
+def create_candidate(
+    candidate: CandidateCreate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
     """Create a new candidate"""
+    # Security: Verify project ownership
+    verify_project_access(candidate.project_id, current_user, db)
+
     # Get max display_order for this project
     max_order = db.query(Candidate).filter(
         Candidate.project_id == candidate.project_id
@@ -191,12 +228,23 @@ def create_candidate(candidate: CandidateCreate, db: Session = Depends(get_db)):
     return db_candidate
 
 @router.put("/{candidate_id}", response_model=CandidateResponse)
-def update_candidate(candidate_id: int, candidate: CandidateUpdate, db: Session = Depends(get_db)):
+def update_candidate(
+    candidate_id: int, 
+    candidate: CandidateUpdate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
     """Update an existing candidate"""
     db_candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
     if not db_candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
     
+    # Security: Verify project ownership
+    verify_project_access(db_candidate.project_id, current_user, db)
+
+    if current_user.role == "viewer":
+        raise HTTPException(status_code=403, detail="Viewers cannot update candidates")
+
     for key, value in candidate.model_dump(exclude_unset=True).items():
         setattr(db_candidate, key, value)
     
@@ -205,19 +253,39 @@ def update_candidate(candidate_id: int, candidate: CandidateUpdate, db: Session 
     return db_candidate
 
 @router.delete("/{candidate_id}")
-def delete_candidate(candidate_id: int, db: Session = Depends(get_db)):
-    """Delete a candidate"""
+def delete_candidate(
+    candidate_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Delete a candidate (Admins Only)"""
+    # Phase 5: RBAC - Only admins can delete
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can delete candidates")
+
     db_candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
+
     if not db_candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
     
+    # Security: Verify project ownership
+    verify_project_access(db_candidate.project_id, current_user, db)
+
     db.delete(db_candidate)
     db.commit()
     return {"message": "Candidate deleted successfully"}
 
 @router.put("/project/{project_id}/reorder")
-def reorder_candidates(project_id: int, reorder: CandidateReorder, db: Session = Depends(get_db)):
+def reorder_candidates(
+    project_id: int, 
+    reorder: CandidateReorder, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
     """Reorder candidates for a project"""
+    # Security: Verify project ownership
+    verify_project_access(project_id, current_user, db)
+
     for index, candidate_id in enumerate(reorder.candidate_ids):
         candidate = db.query(Candidate).filter(
             Candidate.id == candidate_id,

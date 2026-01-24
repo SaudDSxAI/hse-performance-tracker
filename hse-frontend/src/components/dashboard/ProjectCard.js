@@ -8,8 +8,11 @@ export const ProjectCard = ({
     onView,
     onEdit,
     onDelete,
-    riskOptions
+    riskOptions,
+    userRole
 }) => {
+    const isAdmin = userRole === 'admin';
+
     return (
         <div
             className="bg-surface rounded-2xl shadow-lg border border-border overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group"
@@ -21,11 +24,17 @@ export const ProjectCard = ({
                     <div className="flex items-center gap-4">
                         <div className="relative group/lead">
                             <img
-                                src={project.hseLead?.photo || project.hseLeadPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(project.hseLead?.name || project.hseLeadName || 'HSE')}&size=150&background=047857&color=fff`}
+                                src={(() => {
+                                    const photo = project.hseLead?.photo || project.hseLeadPhoto || '';
+                                    if (photo.includes('ui-avatars.com')) {
+                                        return photo.replace(/background=[^&]+/g, 'background=1e3a8a');
+                                    }
+                                    return photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(project.hseLead?.name || project.hseLeadName || 'HSE')}&size=150&background=1e3a8a&color=fff`;
+                                })()}
                                 alt={project.hseLead?.name || project.hseLeadName}
                                 className="w-14 h-14 rounded-full object-cover border-3 border-surface shadow-lg group-hover/lead:border-primary transition-all"
                             />
-                            <div className="absolute -bottom-1 -right-1 bg-success rounded-full p-1 border-2 border-surface shadow-sm">
+                            <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1 border-2 border-surface shadow-sm">
                                 <Shield size={10} className="text-white" />
                             </div>
                         </div>
@@ -45,12 +54,15 @@ export const ProjectCard = ({
                             >
                                 <Edit2 size={16} />
                             </button>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onDelete(project); }}
-                                className="p-2 hover:bg-error/10 rounded-lg text-error transition-colors shadow-sm bg-surface/50"
-                            >
-                                <Trash2 size={16} />
-                            </button>
+                            {isAdmin && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onDelete(project); }}
+                                    className="p-2 hover:bg-error/10 rounded-lg text-error transition-colors shadow-sm bg-surface/50"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            )}
+
                         </div>
                         {performance !== undefined && (
                             <div className="scale-75 origin-top-right -mr-2">
@@ -80,26 +92,26 @@ export const ProjectCard = ({
                         <p className="font-black text-primary text-base leading-none mb-1">{project.manpower || 0}</p>
                         <p className="text-[8px] text-primary/60 uppercase font-black tracking-widest">Manpower</p>
                     </div>
-                    <div className="p-2.5 bg-success/[0.03] rounded-xl text-center border border-success/10 transition-colors group-hover:bg-success/[0.06]">
-                        <p className="font-black text-success text-base leading-none mb-1">{project.manHours || 0}</p>
-                        <p className="text-[8px] text-success/60 uppercase font-black tracking-widest">Man-hours</p>
+                    <div className="p-2.5 bg-primary/[0.03] rounded-xl text-center border border-primary/10 transition-colors group-hover:bg-primary/[0.06]">
+                        <p className="font-black text-primary text-base leading-none mb-1">{project.manHours || 0}</p>
+                        <p className="text-[8px] text-primary/60 uppercase font-black tracking-widest">Man-hours</p>
                     </div>
-                    <div className="p-2.5 bg-amber/[0.03] rounded-xl text-center border border-amber/10 transition-colors group-hover:bg-amber/[0.06]">
-                        <p className="font-black text-amber-600 text-base leading-none mb-1">{project.newInductions || 0}</p>
-                        <p className="text-[8px] text-amber-600/60 uppercase font-black tracking-widest text-[#D97706]">Inductions</p>
+                    <div className="p-2.5 bg-primary/[0.03] rounded-xl text-center border border-primary/10 transition-colors group-hover:bg-primary/[0.06]">
+                        <p className="font-black text-primary text-base leading-none mb-1">{project.newInductions || 0}</p>
+                        <p className="text-[8px] text-primary/60 uppercase font-black tracking-widest">Inductions</p>
                     </div>
                 </div>
 
                 {/* High Risk Activities */}
-                {project.highRisk && project.highRisk.length > 0 && (
+                {project.highRisk && project.highRisk.length > 0 && riskOptions && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
                         {project.highRisk.map(risk => {
                             const option = riskOptions.find(r => r.key === risk);
                             if (!option) return null;
                             const Icon = option.icon;
                             return (
-                                <span key={risk} className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border transition-all ${option.color.replace('bg-', 'bg-opacity-10 bg-').replace('text-', 'border-opacity-20 border- text-')}`}>
-                                    <Icon size={10} />
+                                <span key={risk} className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border transition-all ${option.color?.replace('bg-', 'bg-opacity-10 bg-').replace('text-', 'border-opacity-20 border- text-') || ''}`}>
+                                    {Icon && <Icon size={10} />}
                                     {option.label}
                                 </span>
                             );

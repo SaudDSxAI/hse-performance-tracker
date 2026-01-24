@@ -37,8 +37,9 @@ export const Navbar = ({
                                     {currentUser?.full_name || currentUser?.username}
                                 </span>
                                 <span className="text-[8px] font-black text-text-body uppercase tracking-tighter opacity-50">
-                                    {currentUser?.is_admin ? 'Systems Admin' : 'HSE Specialist'}
+                                    {currentUser?.role === 'admin' ? 'Company Admin' : (currentUser?.role === 'lead' ? 'HSE Lead' : 'HSE Viewer')}
                                 </span>
+
                             </div>
                             <div className="relative group/user">
                                 <div className="w-10 h-10 bg-background rounded-full border-2 border-border flex items-center justify-center cursor-pointer hover:border-primary transition-all overflow-hidden">

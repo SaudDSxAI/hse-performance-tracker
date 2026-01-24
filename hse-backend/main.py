@@ -23,12 +23,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Rate Limiting
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from limiter_config import limiter
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # CORS - Allow frontend only
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://hse-tracker.up.railway.app",  # New frontend URL
-        "http://localhost:3000"
+        "http://localhost:3000",
+        "http://192.168.43.35:3000"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -41,6 +50,8 @@ app.include_router(AddingProjects.router)
 app.include_router(AddingCandidates.router)
 app.include_router(AddingSections.router)
 app.include_router(AddingDailyLogs.router)  # ✅ ADDED DAILY LOGS ROUTER
+import DataExport
+app.include_router(DataExport.router)
 
 @app.get("/")
 def root():

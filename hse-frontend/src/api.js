@@ -61,7 +61,7 @@ const fetchAPI = async (url, options = {}, requireAuth = true) => {
 
     console.log('✅ Response:', response.status, fullURL);
 
-    if (response.status === 401) {
+    if (response.status === 401 && requireAuth) {
       // Token expired or invalid
       removeToken();
       removeUser();
@@ -138,6 +138,55 @@ export const verifyDeletePin = async (projectId, pin) => {
   return data;
 };
 
+// ==================== USER MANAGEMENT (Phase 5) ====================
+
+export const getUsers = async () => {
+  const data = await fetchAPI('/auth/users');
+  return data;
+};
+
+export const inviteUser = async (userData) => {
+  const data = await fetchAPI('/auth/invite', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  });
+  return data;
+};
+
+export const deleteUser = async (userId) => {
+  const data = await fetchAPI(`/auth/users/${userId}`, {
+    method: 'DELETE',
+  });
+  return data;
+};
+
+export const updateUserRole = async (userId, role) => {
+  const data = await fetchAPI(`/auth/users/${userId}/role`, {
+    method: 'PUT',
+    body: JSON.stringify({ role }),
+  });
+  return data;
+};
+
+export const exportData = async () => {
+  const token = localStorage.getItem('hse_token');
+  const response = await fetch(`${API_BASE}/export/full-backup`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  return response.blob();
+};
+
+export const updateUserAssignments = async (userId, projectIds) => {
+  const data = await fetchAPI(`/projects/user/${userId}/assignments`, {
+    method: 'PUT',
+    body: JSON.stringify(projectIds),
+  });
+  return data;
+};
+
+
 // ==================== DATA TRANSFORMATION ====================
 
 // Transform backend data (snake_case) to frontend (camelCase)
@@ -155,6 +204,7 @@ const transformProject = (project) => ({
   newInductions: project.new_inductions,
   highRisk: project.high_risk || [],
   deletePin: project.delete_pin,
+  assignedLeads: project.assigned_leads || [], // ✅ PRESERVE ASSIGNMENTS
   candidates: [],
   monthlyActivities: {
     mockDrill: false,
@@ -178,7 +228,8 @@ const transformProjectToBackend = (project) => ({
   man_hours: parseInt(project.manHours) || 0,
   new_inductions: parseInt(project.newInductions) || 0,
   high_risk: project.highRisk || [],
-  delete_pin: project.deletePin || null
+  delete_pin: project.deletePin || null,
+  assigned_lead_ids: project.assignedLeadIds || []
 });
 
 const transformCandidateToBackend = (candidate, projectId) => ({
@@ -430,6 +481,14 @@ export const assignCandidateToSection = async (candidateId, sectionId) => {
       candidate_id: candidateId,
       section_id: sectionId
     }),
+  });
+  return data;
+};
+
+export const syncSectionCandidates = async (sectionId, candidateIds) => {
+  const data = await fetchAPI(`/sections/${sectionId}/sync-candidates`, {
+    method: 'PUT',
+    body: JSON.stringify(candidateIds),
   });
   return data;
 };

@@ -2,20 +2,47 @@ from sqlalchemy import Column, Integer, String, Boolean, JSON, Date, Time, Forei
 from sqlalchemy.orm import relationship
 from database import Base
 
+class Organization(Base):
+    __tablename__ = "organizations"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False)
+    # subscription_plan = Column(String, default="free") 
+    
+    # Relationships
+    users = relationship("User", back_populates="organization")
+    projects = relationship("Project", back_populates="organization")
+
+# Many-to-Many relationship for Project Isolation (Approach A)
+class ProjectUser(Base):
+    __tablename__ = "project_users"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"))
+
 class User(Base):
     __tablename__ = "users"
     
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True) # Multitenancy link
+    
     username = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, nullable=True)
     full_name = Column(String, nullable=True)
     password_hash = Column(String, nullable=False)
-    is_admin = Column(Boolean, default=False)
+    is_admin = Column(Boolean, default=False) # System level admin (legacy)
+    role = Column(String, default="viewer") # SaaS Roles: admin, lead, viewer
+    
+    # Relationship
+    organization = relationship("Organization", back_populates="users")
+    assigned_projects = relationship("Project", secondary="project_users", back_populates="assigned_leads")
 
 class Project(Base):
     __tablename__ = "projects"
     
     id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True) # Multitenancy link
+    
     name = Column(String, nullable=False)
     location = Column(String)
     company = Column(String)
@@ -23,6 +50,11 @@ class Project(Base):
     hse_lead_photo = Column(String)
     manpower = Column(Integer, default=0)
     man_hours = Column(Integer, default=0)
+    
+    # Relationship
+    organization = relationship("Organization", back_populates="projects")
+    assigned_leads = relationship("User", secondary="project_users", back_populates="assigned_projects")
+
     new_inductions = Column(Integer, default=0)
     high_risk = Column(JSON, default=[])
     delete_pin = Column(String, nullable=True)  # PIN required to delete project
