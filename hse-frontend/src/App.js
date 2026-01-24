@@ -112,7 +112,7 @@ export default function App() {
     setView('home');
   };
 
-  const fetchProjects = useCallback(async (keepSelection = false) => {
+  const fetchProjects = useCallback(async () => {
     try {
       setLoading(true);
       const data = await api.getProjects();
@@ -123,28 +123,30 @@ export default function App() {
         })
       );
       setProjects(projectsWithCandidates);
-
-      // Update selected states to keep data fresh without resetting view
-      if (selectedProject) {
-        const updatedProject = projectsWithCandidates.find(p => p.id === selectedProject.id);
-        if (updatedProject) {
-          setSelectedProject(updatedProject);
-          if (selectedCandidate) {
-            const updatedCandidate = updatedProject.candidates?.find(c => c.id === selectedCandidate.id);
-            if (updatedCandidate) setSelectedCandidate(updatedCandidate);
-          }
-        } else if (view === 'project') {
-          setView('home');
-          setSelectedProject(null);
-        }
-      }
+      return projectsWithCandidates; // Return for manual sync
     } catch (error) {
       console.error('Error fetching projects:', error);
     } finally {
       setLoading(false);
     }
-  }, [selectedProject, selectedCandidate, view]);
+  }, []); // No dependencies - stable function
 
+  // Separate sync function that updates selected states
+  const syncSelectedData = useCallback(async () => {
+    const projectsWithCandidates = await fetchProjects();
+    if (!projectsWithCandidates) return;
+
+    if (selectedProject) {
+      const updatedProject = projectsWithCandidates.find(p => p.id === selectedProject.id);
+      if (updatedProject) {
+        setSelectedProject(updatedProject);
+        if (selectedCandidate) {
+          const updatedCandidate = updatedProject.candidates?.find(c => c.id === selectedCandidate.id);
+          if (updatedCandidate) setSelectedCandidate(updatedCandidate);
+        }
+      }
+    }
+  }, [fetchProjects, selectedProject, selectedCandidate]);
 
   const fetchSections = useCallback(async () => {
     if (!selectedProject?.id) return;
@@ -156,12 +158,13 @@ export default function App() {
     }
   }, [selectedProject?.id]);
 
+  // Initial load only - runs once on login
   useEffect(() => {
     if (isLoggedIn) {
       fetchProjects();
       fetchTeam();
     }
-  }, [isLoggedIn, fetchProjects, fetchTeam]);
+  }, [isLoggedIn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (selectedProject?.id && projectTab === 'sections') {
@@ -269,11 +272,14 @@ export default function App() {
   const saveDailyLog = async () => {
     try {
       setLoading(true);
+      console.log('📤 Saving log for candidate', selectedCandidate.id, 'date', selectedDate);
       await api.createDailyLog(selectedCandidate.id, selectedDate, form);
-      await fetchProjects(true); // Sync global state
-      setModal(null);
+      console.log('✅ Log saved successfully');
+      setModal(null); // Close immediately on success
+      await syncSelectedData(); // Sync and update selected states
     } catch (error) {
-      alert('Failed to save log');
+      console.error('❌ Save Daily Log Error:', error);
+      alert(`Failed to save log: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -449,14 +455,19 @@ export default function App() {
   };
   // Auto-prompt log for missing data when date/candidate changes
   useEffect(() => {
-    if (view === 'candidate' && selectedCandidate && !modal) {
-      const logExists = selectedCandidate.dailyLogs?.[selectedDate];
-      if (!logExists) {
-        setForm({ ...emptyDailyLog });
-        setModal('dailyLog');
+    if (view === 'candidate' && selectedCandidate) {
+      if (modal === null) {  // Only Auto-Open if no modal is currently open
+        const logData = selectedCandidate.dailyLogs?.[selectedDate];
+        if (!logData) {
+          setForm({ ...emptyDailyLog });
+          setModal('dailyLog');
+        } else {
+          // If data exists, just load it into state quietly or do nothing
+          // setForm(logData); // Optional: preload form state if user decides to edit later
+        }
       }
     }
-  }, [selectedDate, selectedCandidate, view, modal]);
+  }, [selectedDate, selectedCandidate?.id, view]);
 
   const goToCandidate = (c) => {
     setSelectedCandidate(c);
@@ -581,21 +592,25 @@ export default function App() {
                   { label: '3 Months', days: 90 },
                   { label: '6 Months', days: 180 },
                   { label: '1 Year', days: 365 },
-                ].map(range => (
-                  <button
-                    key={range.label}
-                    onClick={() => setProjectChartRange({
-                      from: new Date(new Date().setDate(new Date().getDate() - range.days)).toISOString().split('T')[0],
-                      to: new Date().toISOString().split('T')[0]
-                    })}
-                    className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-tight rounded-lg border transition-all ${Math.abs((new Date(projectChartRange.to) - new Date(projectChartRange.from)) / (1000 * 60 * 60 * 24) - range.days) < 2
-                      ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20'
-                      : 'bg-background hover:border-primary/30 text-text-body'
-                      }`}
-                  >
-                    {range.label}
-                  </button>
-                ))}
+                ].map(range => {
+                  const fromDate = new Date();
+                  fromDate.setDate(fromDate.getDate() - range.days);
+                  return (
+                    <button
+                      key={range.label}
+                      onClick={() => setProjectChartRange({
+                        from: fromDate.toISOString().split('T')[0],
+                        to: getLocalDate()
+                      })}
+                      className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-tight rounded-lg border transition-all ${Math.abs((new Date(projectChartRange.to) - new Date(projectChartRange.from)) / (1000 * 60 * 60 * 24) - range.days) < 2
+                        ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20'
+                        : 'bg-background hover:border-primary/30 text-text-body'
+                        }`}
+                    >
+                      {range.label}
+                    </button>
+                  );
+                })}
 
                 <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
 
@@ -618,145 +633,205 @@ export default function App() {
               </div>
             </div>
 
-            <div className="bg-surface rounded-xl border p-6">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex-1 flex flex-col sm:flex-row items-center justify-around border-r border-dashed py-2">
-                  <div className="text-center">
-                    <p className="text-xs font-bold text-text-body/40 uppercase mb-4">Overall Score</p>
-                    <PerformanceGauge percentage={getProjectPerformanceStats(selectedProject.candidates).average} />
+            {/* Performance Stats - Full Width Top Section */}
+            <div className="bg-surface rounded-xl border p-6 flex flex-col md:flex-row items-center justify-around gap-8 mb-6">
+              <div className="flex flex-col items-center">
+                <p className="text-xs font-bold text-text-body/40 uppercase mb-4 tracking-widest">Overall Project Score</p>
+                <PerformanceGauge percentage={getProjectPerformanceStats(selectedProject.candidates).average} size="large" />
+              </div>
+
+              <div className="h-24 w-px bg-border hidden md:block" />
+
+              <div className="w-full max-w-md flex flex-col items-center">
+                <p className="text-xs font-bold text-text-body/40 uppercase mb-4 tracking-widest">Score Distribution</p>
+                <div className="w-full h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={getProjectPerformanceStats(selectedProject.candidates).distribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={90}
+                        paddingAngle={3}
+                        dataKey="value"
+                        label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
+                          const RADIAN = Math.PI / 180;
+                          const radius = outerRadius * 1.25; // Push label further out
+                          const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                          const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                          return (
+                            <text
+                              x={x}
+                              y={y}
+                              fill="#0f172a"
+                              textAnchor={x > cx ? 'start' : 'end'}
+                              dominantBaseline="central"
+                              style={{ fontSize: '13px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.05em', filter: 'drop-shadow(0px 1px 1px white)' }}
+                            >
+                              {`${name} ${(percent * 100).toFixed(0)}%`}
+                            </text>
+                          );
+                        }}
+                        labelLine={true}
+                      >
+                        {getProjectPerformanceStats(selectedProject.candidates).distribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="white" strokeWidth={2} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', fontSize: '12px', fontWeight: 'bold' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+              {/* Sidebar / Filters moved here if needed, or kept simple */}
+              <div className="w-full">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setProjectTab('candidates')}
+                      className={`text-sm font-black uppercase tracking-widest transition-colors ${projectTab === 'candidates' ? 'text-primary border-b-2 border-primary' : 'text-text-body opacity-40 hover:opacity-100'}`}
+                    >
+                      Candidates
+                    </button>
+                    <button
+                      onClick={() => setProjectTab('sections')}
+                      className={`text-sm font-black uppercase tracking-widest transition-colors ${projectTab === 'sections' ? 'text-primary border-b-2 border-primary' : 'text-text-body opacity-40 hover:opacity-100'}`}
+                    >
+                      Sections
+                    </button>
                   </div>
-                  <div className="w-40 h-40 flex flex-col items-center">
-                    <p className="text-[10px] font-bold text-text-body/40 uppercase mb-2">Score Distribution</p>
-                    <div className="w-full h-28">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={getProjectPerformanceStats(selectedProject.candidates).distribution}
-                            innerRadius={30}
-                            outerRadius={45}
-                            paddingAngle={5}
-                            dataKey="value"
-                          >
-                            {getProjectPerformanceStats(selectedProject.candidates).distribution.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', fontSize: '10px', fontWeight: 'bold' }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
+                  <div className="flex items-center gap-2">
+                    <div className="bg-surface border border-border rounded-xl flex items-center px-3 py-2 w-64 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                      <Search size={16} className="text-text-body opacity-40 mr-2" />
+                      <input
+                        type="text"
+                        placeholder="Search candidates..."
+                        value={candidateSearch}
+                        onChange={(e) => setCandidateSearch(e.target.value)}
+                        className="bg-transparent outline-none text-sm font-bold text-text-main placeholder:text-text-body/30 w-full"
+                      />
                     </div>
+                    {currentUser?.role !== 'viewer' && projectTab === 'candidates' && (
+                      <button onClick={() => { setForm({}); setModal('candidate'); }} className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90">
+                        <Plus size={16} />
+                        Add Candidate
+                      </button>
+                    )}
                   </div>
                 </div>
-                <div className="flex-[2]">
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex gap-2">
-                      <button onClick={() => setProjectTab('candidates')} className={`px-4 py-2 text-sm font-bold rounded-lg ${projectTab === 'candidates' ? 'bg-primary text-white' : 'bg-background border'}`}>Candidates</button>
-                      <button onClick={() => setProjectTab('sections')} className={`px-4 py-2 text-sm font-bold rounded-lg ${projectTab === 'sections' ? 'bg-primary text-white' : 'bg-background border'}`}>Sections</button>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-body/40" />
-                        <input type="text" value={candidateSearch} onChange={e => setCandidateSearch(e.target.value)} className="pl-9 pr-3 py-2 border rounded-xl text-sm" placeholder="Search..." />
-                      </div>
-                      {currentUser?.role !== 'viewer' && projectTab === 'candidates' && (
-                        <button onClick={() => { setForm({}); setModal('candidate'); }} className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90">
-                          <Plus size={16} />
-                          Add Candidate
-                        </button>
-                      )}
-                    </div>
-                  </div>
 
 
-                  {projectTab === 'candidates' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {selectedProject.candidates?.filter(c => c.name.toLowerCase().includes(candidateSearch.toLowerCase())).map((c, i, arr) => (
+                {projectTab === 'candidates' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {selectedProject.candidates
+                      ?.filter(c => c.name.toLowerCase().includes(candidateSearch.toLowerCase()))
+                      .sort((a, b) => getOverallPerformance(b) - getOverallPerformance(a))
+                      .map((c, i, arr) => (
                         <CandidateCard key={c.id} candidate={c} performance={getOverallPerformance(c)} onView={goToCandidate} onEdit={c => { setForm(c); setModal('candidate'); }} onDelete={() => deleteCandidateHandler(c.id)} onPhotoClick={(e, candidate) => { e.stopPropagation(); setPhotoCandidate(candidate); }} isFirst={i === 0} isLast={i === arr.length - 1} onMoveUp={() => moveCandidate(c.id, 'up')} onMoveDown={() => moveCandidate(c.id, 'down')} userRole={currentUser?.role} />
                       ))}
-                    </div>
-                  )}
+                  </div>
+                )}
 
 
-                  {projectTab === 'sections' && (
-                    <div className="space-y-4">
-                      {currentUser?.role !== 'viewer' && (
-                        <button onClick={() => { setSectionForm({}); setSectionModal('add'); }} className="w-full py-3 border-2 border-dashed rounded-xl text-primary font-bold hover:bg-primary/5 transition-colors flex items-center justify-center gap-2">
-                          <Plus size={18} />
-                          Create New Section
-                        </button>
-                      )}
-                      {sections.length === 0 ? (
-                        <div className="text-center py-12 bg-background/30 rounded-xl">
-                          <Layers size={40} className="mx-auto mb-4 text-text-body/20" />
-                          <p className="text-text-body/50 font-bold">No sections created yet</p>
-                        </div>
-                      ) : (
-                        sections.map(s => (
-                          <div key={s.id} className="border rounded-xl overflow-hidden">
-                            <div className="p-4 bg-background/50 flex justify-between items-center">
-                              <div className="flex items-center gap-3">
-                                <button onClick={() => toggleSectionVisibility(s.id)} className="p-1 hover:bg-background rounded">
-                                  {hiddenSections.has(s.id) ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
-                                </button>
-                                <span className="font-bold">{s.name}</span>
-                                <span className="text-xs text-text-body/50">({getSectionCandidates(s.id).length} members)</span>
-                              </div>
-                              {currentUser?.role !== 'viewer' && (
-                                <div className="flex gap-2">
-                                  <button onClick={() => { setSectionForm(s); setSelectedSection(s); setSectionModal('edit'); }} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
-                                    <Edit2 size={16} />
-                                  </button>
-                                  {currentUser?.role === 'admin' && (
-                                    <button onClick={() => handleDeleteSection(s.id)} className="p-2 text-error hover:bg-error/10 rounded-lg transition-colors">
-                                      <Trash2 size={16} />
-                                    </button>
-                                  )}
-                                </div>
-                              )}
+                {projectTab === 'sections' && (
+                  <div className="space-y-4">
+                    {currentUser?.role !== 'viewer' && (
+                      <button onClick={() => { setSectionForm({}); setSectionModal('add'); }} className="w-full py-3 border-2 border-dashed rounded-xl text-primary font-bold hover:bg-primary/5 transition-colors flex items-center justify-center gap-2">
+                        <Plus size={18} />
+                        Create New Section
+                      </button>
+                    )}
+                    {sections.length === 0 ? (
+                      <div className="text-center py-12 bg-background/30 rounded-xl">
+                        <Layers size={40} className="mx-auto mb-4 text-text-body/20" />
+                        <p className="text-text-body/50 font-bold">No sections created yet</p>
+                      </div>
+                    ) : (
+                      sections.map(s => (
+                        <div key={s.id} className="border rounded-xl overflow-hidden">
+                          <div className="p-4 bg-background/50 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                              <button onClick={() => toggleSectionVisibility(s.id)} className="p-1 hover:bg-background rounded">
+                                {hiddenSections.has(s.id) ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+                              </button>
+                              <span className="font-bold">{s.name}</span>
+                              <span className="text-xs text-text-body/50">({getSectionCandidates(s.id).length} members)</span>
                             </div>
-                            {!hiddenSections.has(s.id) && (
-                              <div className="p-4 bg-surface">
-                                {getSectionCandidates(s.id).length === 0 ? (
-                                  <p className="text-center text-text-body/40 text-sm py-4">No candidates in this section</p>
-                                ) : (
-                                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                    {getSectionCandidates(s.id).map(c => (
-                                      <div key={c.id} className="p-3 border rounded-lg flex justify-between items-center bg-background/50 hover:bg-background transition-colors">
-                                        <div className="flex items-center gap-3">
-                                          <img src={c.photo} alt={c.name} className="w-8 h-8 rounded-full" />
-                                          <span className="text-sm font-medium">{c.name}</span>
-                                        </div>
-                                        {currentUser?.role !== 'viewer' && (
-                                          <button onClick={() => handleUnassignCandidate(s.id, c.id)} className="text-error hover:bg-error/10 p-1 rounded">
-                                            <X size={14} />
-                                          </button>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                                {currentUser?.role !== 'viewer' && (
-                                  <button onClick={() => {
-                                    setSelectedSection(s);
-                                    const alreadyAssigned = getSectionCandidates(s.id).map(c => c.id);
-                                    setSelectedCandidates(alreadyAssigned);
-                                    setSectionModal('assign');
-                                  }} className="mt-4 text-xs font-bold text-primary hover:text-primary/70 flex items-center gap-1">
-                                    <Plus size={14} />
-                                    Assign Candidates
+                            {currentUser?.role !== 'viewer' && (
+                              <div className="flex gap-2">
+                                <button onClick={() => { setSectionForm(s); setSelectedSection(s); setSectionModal('edit'); }} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
+                                  <Edit2 size={16} />
+                                </button>
+                                {currentUser?.role === 'admin' && (
+                                  <button onClick={() => handleDeleteSection(s.id)} className="p-2 text-error hover:bg-error/10 rounded-lg transition-colors">
+                                    <Trash2 size={16} />
                                   </button>
                                 )}
                               </div>
                             )}
                           </div>
-                        ))
-                      )}
-                    </div>
-                  )}
+                          {!hiddenSections.has(s.id) && (
+                            <div className="p-4 bg-surface">
+                              {getSectionCandidates(s.id).length === 0 ? (
+                                <p className="text-center text-text-body/40 text-sm py-4">No candidates in this section</p>
+                              ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  {getSectionCandidates(s.id).map(c => {
+                                    const perf = getOverallPerformance(c);
+                                    const perfColor = perf >= 80 ? '#0284C7' : perf >= 60 ? '#0EA5E9' : perf >= 40 ? '#7DD3FC' : '#BAE6FD';
+                                    return (
+                                      <div key={c.id} className="p-3 border rounded-lg flex justify-between items-center bg-background/50 hover:bg-background transition-colors">
+                                        <div className="flex items-center gap-3">
+                                          <img src={c.photo} alt={c.name} className="w-10 h-10 rounded-full border-2" style={{ borderColor: perfColor }} />
+                                          <div>
+                                            <span className="text-sm font-bold block">{c.name}</span>
+                                            <span className="text-[10px] text-text-body/60 uppercase">{c.role || 'Team Member'}</span>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <div className="text-center">
+                                            <div className="text-lg font-black" style={{ color: perfColor }}>{perf}%</div>
+                                            <div className="text-[8px] font-bold uppercase" style={{ color: perfColor }}>
+                                              {perf >= 80 ? 'Excellent' : perf >= 60 ? 'Good' : perf >= 40 ? 'Fair' : 'Poor'}
+                                            </div>
+                                          </div>
+                                          {currentUser?.role !== 'viewer' && (
+                                            <button onClick={() => handleUnassignCandidate(s.id, c.id)} className="text-error hover:bg-error/10 p-1 rounded ml-2">
+                                              <X size={14} />
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {currentUser?.role !== 'viewer' && (
+                                <button onClick={() => {
+                                  setSelectedSection(s);
+                                  const alreadyAssigned = getSectionCandidates(s.id).map(c => c.id);
+                                  setSelectedCandidates(alreadyAssigned);
+                                  setSectionModal('assign');
+                                }} className="mt-4 text-xs font-bold text-primary hover:text-primary/70 flex items-center gap-1">
+                                  <Plus size={14} />
+                                  Assign Candidates
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
 
-                </div>
               </div>
             </div>
           </div>

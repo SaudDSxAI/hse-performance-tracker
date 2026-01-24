@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const PerformanceGauge = ({ percentage }) => {
+export const PerformanceGauge = ({ percentage, size = 'small' }) => {
     const getColor = () => {
         if (percentage >= 80) return '#0284C7'; // Darker Sky Blue
         if (percentage >= 60) return '#0EA5E9'; // Main Sky Blue
@@ -20,9 +20,18 @@ export const PerformanceGauge = ({ percentage }) => {
     // Generate unique ID for this gauge instance
     const uniqueId = `gauge-grad-${Math.random().toString(36).substr(2, 9)}`;
 
+    // Size configurations
+    const isLarge = size === 'large';
+    const containerClass = isLarge ? 'w-48 h-36' : 'w-28 h-20';
+    const percentageClass = isLarge ? 'text-3xl' : 'text-lg';
+    const percentSymbolClass = isLarge ? 'text-sm' : 'text-[10px]';
+    const labelClass = isLarge ? 'text-xs px-3 py-1' : 'text-[9px] px-2 py-0.5';
+    const marginClass = isLarge ? '-mt-2' : '-mt-1';
+    const gapClass = isLarge ? 'gap-1' : 'gap-0.5';
+
     return (
         <div className="flex flex-col items-center group">
-            <div className="relative w-28 h-20 flex items-center justify-center">
+            <div className={`relative ${containerClass} flex items-center justify-center`}>
                 <svg className="w-full h-full drop-shadow-sm" viewBox="0 -5 100 70">
                     <defs>
                         <linearGradient id={uniqueId} x1="0%" y1="0%" x2="100%" y2="0%">
@@ -72,13 +81,13 @@ export const PerformanceGauge = ({ percentage }) => {
                     </g>
                 </svg>
             </div>
-            <div className="text-center -mt-1">
-                <div className="flex items-baseline justify-center gap-0.5">
-                    <span className="text-lg font-black tracking-tighter" style={{ color: getColor() }}>{percentage}</span>
-                    <span className="text-[10px] font-bold opacity-40">%</span>
+            <div className={`text-center ${marginClass}`}>
+                <div className={`flex items-baseline justify-center ${gapClass}`}>
+                    <span className={`${percentageClass} font-black tracking-tighter`} style={{ color: getColor() }}>{percentage}</span>
+                    <span className={`${percentSymbolClass} font-bold opacity-40`}>%</span>
                 </div>
                 <div
-                    className="text-[9px] font-black tracking-[0.15em] uppercase px-2 py-0.5 rounded-full border border-current mt-0.5 mx-auto w-fit transition-all group-hover:bg-current group-hover:text-surface"
+                    className={`${labelClass} font-black tracking-[0.15em] uppercase rounded-full border border-current mt-0.5 mx-auto w-fit transition-all group-hover:bg-current group-hover:text-surface`}
                     style={{ color: getColor(), borderColor: `${getColor()}40` }}
                 >
                     {getLabel()}
