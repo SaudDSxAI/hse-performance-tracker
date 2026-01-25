@@ -1,9 +1,11 @@
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:8000/api'
-  : 'https://hse-backend.up.railway.app/api';
+  : (window.location.hostname.includes('railway.app')
+    ? `https://${window.location.hostname.replace('hse-tracker', 'hse-backend')}/api` // Attempt to guess backend domain
+    : 'https://hse-backend.up.railway.app/api');
 
 console.log('🔧 API_BASE:', API_BASE);
-console.log('📦 API.JS VERSION: 2.0 - CONSOLIDATED ENDPOINTS');
+console.log('🌍 HOSTNAME:', window.location.hostname);
 
 // Token management
 const getToken = () => localStorage.getItem('hse_token');
