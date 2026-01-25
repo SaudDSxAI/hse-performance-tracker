@@ -84,7 +84,12 @@ export default function App() {
       setIsLoggedIn(true);
       setCurrentUser(data.user);
     } catch (error) {
-      setLoginError(error.message || 'Invalid username or password');
+      const msg = error.message || 'Invalid username or password';
+      if (msg.toLowerCase().includes('fetch')) {
+        setLoginError(`${msg} (Attempted URL: ${api.API_BASE})`);
+      } else {
+        setLoginError(msg);
+      }
     } finally {
       setLoading(false);
     }
