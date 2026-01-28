@@ -468,7 +468,7 @@ export default function App() {
       }
     }
     // Removed 'modal' from dependencies to prevent auto-reopening loops
-  }, [selectedDate, selectedCandidate?.id, view]);
+  }, [selectedDate, selectedCandidate?.id, view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const goToCandidate = (c) => {
     setSelectedCandidate(c);
