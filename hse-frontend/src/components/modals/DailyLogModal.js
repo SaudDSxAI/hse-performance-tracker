@@ -109,12 +109,18 @@ export const DailyLogModal = ({
                         </div>
                     </div>
 
-                    {/* Save Button */}
-                    <div className="sticky bottom-0 bg-surface pt-4 border-t border-border -mx-6 px-6 -mb-6 pb-6">
+                    {/* Save and Skip Buttons */}
+                    <div className="sticky bottom-0 bg-surface pt-4 border-t border-border -mx-6 px-6 -mb-6 pb-6 flex gap-3">
+                        <button
+                            onClick={onClose}
+                            className="flex-1 bg-background text-text-body px-4 py-3 rounded-xl hover:bg-border/30 font-bold transition-all border border-border"
+                        >
+                            Skip for Now
+                        </button>
                         <button
                             onClick={onSave}
                             disabled={loading}
-                            className="w-full bg-primary text-white px-4 py-3 rounded-xl hover:opacity-90 disabled:opacity-50 font-bold transition-all shadow-lg shadow-primary/30"
+                            className="flex-[2] bg-primary text-white px-4 py-3 rounded-xl hover:opacity-90 disabled:opacity-50 font-bold transition-all shadow-lg shadow-primary/30"
                         >
                             {loading ? 'Saving...' : 'Save Daily Log'}
                         </button>

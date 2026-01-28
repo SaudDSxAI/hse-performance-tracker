@@ -460,19 +460,15 @@ export default function App() {
   };
   // Auto-prompt log for missing data when date/candidate changes
   useEffect(() => {
-    if (view === 'candidate' && selectedCandidate) {
-      if (modal === null) {  // Only Auto-Open if no modal is currently open
-        const logData = selectedCandidate.dailyLogs?.[selectedDate];
-        if (!logData) {
-          setForm({ ...emptyDailyLog });
-          setModal('dailyLog');
-        } else {
-          // If data exists, just load it into state quietly or do nothing
-          // setForm(logData); // Optional: preload form state if user decides to edit later
-        }
+    if (view === 'candidate' && selectedCandidate && modal === null) {
+      const logData = selectedCandidate.dailyLogs?.[selectedDate];
+      if (!logData) {
+        setForm({ ...emptyDailyLog });
+        setModal('dailyLog');
       }
     }
-  }, [selectedDate, selectedCandidate, view, modal]);
+    // Removed 'modal' from dependencies to prevent auto-reopening loops
+  }, [selectedDate, selectedCandidate?.id, view]);
 
   const goToCandidate = (c) => {
     setSelectedCandidate(c);
